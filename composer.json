@@ -1,0 +1,19 @@
+{
+    "name": "floriansdv/sparkframe",
+    "version": "dev-main",
+    "description": "A simple framework to help you get started with creating personal projects",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Sparkframe\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "FlorianSDV",
+            "email": "florian-de-vries@hotmail.com"
+        }
+    ],
+    "require": {}
+}
