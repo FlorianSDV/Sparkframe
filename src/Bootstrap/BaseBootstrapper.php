@@ -3,6 +3,7 @@
 namespace Sparkframe\Bootstrap;
 
 use Exception;
+use Sparkframe\Database\DatabaseConnectionFactory;
 
 abstract class BaseBootstrapper
 {
@@ -49,9 +50,14 @@ abstract class BaseBootstrapper
         $globals->initialize($root_dir);
     }
 
+    /**
+     * @throws Exception
+     */
     protected function setupDatabaseConnections(): void
     {
-
+        //todo: saving database in globals.
+        //todo: allow multiple databases
+        $database_connection = DatabaseConnectionFactory::createDatabaseConnection();
     }
 
     private function setupRouter(): void

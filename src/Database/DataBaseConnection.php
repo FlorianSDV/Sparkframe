@@ -2,7 +2,7 @@
 
 namespace Sparkframe\Database;
 
-class DataBaseConnection
+interface DataBaseConnection
 {
-
+    //todo: implement various methods for building queries
 }

@@ -15,5 +15,7 @@
             "email": "93703843+FlorianSDV@users.noreply.github.com"
         }
     ],
-    "require": {}
+    "require": {
+      "ext-sqlite3": "*"
+    }
 }
