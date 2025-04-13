@@ -15,5 +15,7 @@
             "email": "florian-de-vries@hotmail.com"
         }
     ],
-    "require": {}
+    "require": {
+      "ext-sqlite3": "*"
+    }
 }
