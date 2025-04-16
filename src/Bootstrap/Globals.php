@@ -36,7 +36,6 @@ class Globals
     {
         self::$root_dir = $root_dir;
         $this->loadEnv();
-        $this->initializeControllers();
     }
 
     public static function getRootdir(): string
@@ -51,7 +50,7 @@ class Globals
         throw new Exception("Cannot unserialize singleton");
     }
 
-    private function initializeControllers(): void
+    public function initializeControllers(): void
     {
         $controllers_dir = self::$root_dir . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'Controller';
 

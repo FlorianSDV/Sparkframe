@@ -36,13 +36,7 @@ abstract class BaseBootstrapper
         return self::$instance;
     }
 
-    public function bootstrap(string $root_dir): void
-    {
-        $this->initializeGlobals($root_dir);
-        $this->setupRouter();
-    }
-    
-    protected function initializeGlobals(string $root_dir): void
+    public function initializeGlobals(string $root_dir): void
     {
         // env variables
         // db connection strings
@@ -50,6 +44,11 @@ abstract class BaseBootstrapper
         $globals->initialize($root_dir);
     }
 
+    public function setupControllers(): void
+    {
+        $globals = Globals::getInstance();
+        $globals->initializeControllers();
+    }
     /**
      * @throws Exception
      */
@@ -61,7 +60,7 @@ abstract class BaseBootstrapper
         }
     }
 
-    private function setupRouter(): void
+    public function setupRouter(): void
     {
         Router::setRoutes();
     }
