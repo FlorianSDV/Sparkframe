@@ -4,12 +4,17 @@ namespace Sparkframe\Bootstrap;
 
 use Exception;
 use Sparkframe\Controller\Controller;
+use Sparkframe\Database\DataBaseConnection;
 
 class Globals
 {
     private static Globals $instance;
     private static string $root_dir;
 
+    /**
+     * @var DataBaseConnection[]
+     */
+    private static array $databases;
     private Router $router;
 
     /**
@@ -117,4 +122,13 @@ class Globals
         }
     }
 
+    public static function addDatabaseConnection(string $database_name, DataBaseConnection $PDO): void
+    {
+        static::$databases[$database_name] = $PDO;
+    }
+
+    public static function getDatabaseConnection(string $database_name): DataBaseConnection
+    {
+        return static::$databases[$database_name];
+    }
 }
