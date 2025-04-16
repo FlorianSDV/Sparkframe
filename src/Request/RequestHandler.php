@@ -5,7 +5,6 @@ namespace Sparkframe\Request;
 use Exception;
 use Sparkframe\Bootstrap\Globals;
 use Sparkframe\Bootstrap\Router;
-use Sparkframe\Controller\Controller;
 
 class RequestHandler
 {
@@ -20,11 +19,11 @@ class RequestHandler
      */
     public function handle()
     {
-        $info = Router::routeToMethod($this->request);
+        $method_route = Router::routeToMethod($this->request);
         
-        $controller = Globals::getController($info['controller']);
+        $controller = Globals::getController($method_route->getController());
 
-        $method = $info['method'];
+        $method = $method_route->getMethodName();
         return $controller->$method();
     }
 }

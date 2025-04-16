@@ -6,6 +6,7 @@ use Sparkframe\Attributes\Route;
 use Sparkframe\Bootstrap\Globals;
 use Sparkframe\Database\DataBaseConnection;
 use Sparkframe\Request\Request;
+use Sparkframe\Tools\MethodRoute;
 
 abstract class Controller
 {
@@ -45,10 +46,12 @@ abstract class Controller
                  * @var Route $new_method_route_instance
                  */
                 $new_method_route_instance = $method_route->newInstance();
-                $controller_routes[$new_method_route_instance->getRequestMethod()][$new_method_route_instance->getRoute()] = [
-                    'controller' => $method->class,
-                    'method' => $method->name
-                ];
+
+                $controller_routes[$new_method_route_instance->getRequestMethod()][] = new MethodRoute(
+                    $new_method_route_instance->getRoute(),
+                    $method->class,
+                    $method->name
+                );
             }
         }
 

@@ -4,6 +4,7 @@ namespace Sparkframe\Bootstrap;
 
 use Exception;
 use Sparkframe\Request\Request;
+use Sparkframe\Tools\MethodRoute;
 
 class Router
 {
@@ -30,15 +31,24 @@ class Router
     /**
      * @throws Exception
      */
-    public static function routeToMethod(Request $request): array
+    public static function routeToMethod(Request $request): MethodRoute
     {
         $request_method = $request->getRequestMethod();
-        $request_uri = $request->getUri();
+        $request_uri = explode('/', $request->getUri());
 
-        if (!isset(self::$routes[$request_method][$request_uri])) {
+        if (!isset(self::$routes[$request_method])) {
             throw new Exception('404 not found');
         }
 
-        return self::$routes[$request_method][$request_uri];
+        foreach (self::$routes[$request_method] as $method_route) {
+            /**
+             * @var MethodRoute $method_route
+             */
+            if ($method_route->matchUri($request_uri)) {
+                return $method_route;
+            }
+        }
+
+        throw new Exception('404 not found');
     }
 }
