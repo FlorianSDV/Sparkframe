@@ -9,7 +9,7 @@ class DatabaseConnectionFactory
     /**
      * @throws Exception
      */
-    public static function createDatabaseConnection(BaseDatabaseInfo $databaseInfo): DataBaseConnection
+    public static function createDatabaseConnection(DatabaseInfo $databaseInfo): DataBaseConnection
     {
         $pdo = Pdo::connect(
             $databaseInfo->getDatabaseUrl(),

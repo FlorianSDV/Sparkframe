@@ -2,7 +2,7 @@
 
 namespace Sparkframe\Database;
 
-abstract class BaseDatabaseInfo
+class DatabaseInfo
 {
     protected string $database_url;
     protected string $user;

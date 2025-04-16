@@ -5,7 +5,7 @@ namespace Sparkframe\Database;
 abstract class BaseDatabaseInfoCollection
 {
     /**
-     * @var BaseDatabaseInfo[]
+     * @var DatabaseInfo[]
      */
     protected array $database_info_collection;
 
