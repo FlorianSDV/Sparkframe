@@ -47,7 +47,7 @@ abstract class Controller
                  */
                 $new_method_route_instance = $method_route->newInstance();
 
-                $controller_routes[$new_method_route_instance->getRequestMethod()][] = new MethodRoute(
+                $controller_routes[$new_method_route_instance->getRequestMethod()->value][] = new MethodRoute(
                     $new_method_route_instance->getRoute(),
                     $method->class,
                     $method->name
