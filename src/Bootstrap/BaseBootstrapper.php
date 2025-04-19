@@ -2,6 +2,8 @@
 
 namespace Sparkframe\Bootstrap;
 
+require __DIR__ . '/../Tools/Constants.php';
+
 use Exception;
 use Sparkframe\Database\BaseDatabaseInfoCollection;
 use Sparkframe\Database\DatabaseConnectionFactory;
