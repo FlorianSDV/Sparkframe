@@ -126,7 +126,7 @@ class Globals
         static::$databases[$database_name] = $PDO;
     }
 
-    public static function getDatabaseConnection(string $database_name): DataBaseConnection
+    public static function getDatabaseConnection(string $database_name): ?DataBaseConnection
     {
         return static::$databases[$database_name];
     }
