@@ -3,31 +3,19 @@
 namespace Sparkframe\Controller;
 
 use Sparkframe\Attributes\Route;
-use Sparkframe\Bootstrap\Globals;
-use Sparkframe\Database\DataBaseConnection;
+use Sparkframe\Model\Model;
 use Sparkframe\Request\Request;
 use Sparkframe\Tools\MethodRoute;
 
 abstract class Controller
 {
-    // een controller moet een model hebben
-//    protected Model $model;
-//
-//    public function __construct(Model $model)
-//    {
-//        $this->model = $model;
-//    }
-
     protected Request $request;
-    protected ?DataBaseConnection $database_connection = null;
+    protected ?Model $model = null;
 
-
-    public function __construct(?string $database_name = null)
+    public function __construct(?Model $model = null)
     {
         $this->request = new Request();
-        if ($database_name !== null) {
-            $this->database_connection = Globals::getDatabaseConnection($database_name);
-        }
+        $this->model = $model;
     }
 
     public function getRoutes(): array
