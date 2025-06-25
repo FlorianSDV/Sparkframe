@@ -2,6 +2,7 @@
 
 namespace Sparkframe\Database\QueryBuilder\SQLite;
 
+use PDO;
 use Sparkframe\Database\QueryBuilder\SelectQueryBuilder;
 
 class SQLiteSelectQueryBuilder extends SqliteQueryBuilder implements SelectQueryBuilder
@@ -26,7 +27,7 @@ class SQLiteSelectQueryBuilder extends SqliteQueryBuilder implements SelectQuery
     {
         $query_string = $this->getSelectPart();
         $query_string .= $this->getFromPart();
-        $query_string .= $this->getWherePart();
+        $query_string .= $this->getPreparedWherePart();
         $query_string .= $this->getLimitPart();
 
         return $query_string;
@@ -54,8 +55,11 @@ class SQLiteSelectQueryBuilder extends SqliteQueryBuilder implements SelectQuery
 
     function execute(): array
     {
-        $query = $this->getQuery();
-        return $this->dataBaseConnection->query($query)->fetchAll();
+        $query_string = $this->getQuery();
+        $query = $this->dataBaseConnection
+            ->prepare($query_string);
+        $query->execute($this->getPreparedWherePartStatements());
+        return $query->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**

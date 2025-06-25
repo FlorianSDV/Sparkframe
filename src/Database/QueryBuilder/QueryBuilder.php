@@ -6,7 +6,7 @@ use Sparkframe\Database\DataBaseConnection;
 
 abstract class QueryBuilder
 {
-    protected array $where_columns = [];
+    protected array $where_conditions = [];
 
     public function __construct(protected DataBaseConnection $dataBaseConnection, protected string $from_table_name)
     {
@@ -14,9 +14,10 @@ abstract class QueryBuilder
 
     abstract public function getFromPart(): string;
 
-    abstract function where(): self;
+    abstract function where(array $filter_criteria): self;
 
     abstract function execute();
 
-    abstract function getWherePart(): string;
+    abstract function getPreparedWherePart(): string;
+    abstract function getPreparedWherePartStatements(): array;
 }

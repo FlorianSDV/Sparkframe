@@ -13,9 +13,9 @@ readonly class SqliteDatabaseConnection implements DataBaseConnection
 
     }
 
-    public function query(string $query_string): false|PDOStatement
+    public function prepare(string $query_string): false|PDOStatement
     {
-        return $this->pdo->query($query_string);
+        return $this->pdo->prepare($query_string);
     }
 
     public function selectQuery(string $from_table_name): SQLiteSelectQueryBuilder
