@@ -9,4 +9,10 @@ interface SelectQueryBuilder
      * @return self
      */
     public function select(string ...$column_names): self;
+
+    /**
+     * @param int $limit_amount
+     * @return self
+     */
+    public function limit(int $limit_amount): self;
 }
