@@ -3,19 +3,16 @@
 namespace Sparkframe\Controller;
 
 use Sparkframe\Attributes\Route;
-use Sparkframe\Model\Model;
 use Sparkframe\Request\Request;
 use Sparkframe\Tools\MethodRoute;
 
 abstract class Controller
 {
     protected Request $request;
-    protected ?Model $model = null;
 
-    public function __construct(?Model $model = null)
+    public function __construct()
     {
         $this->request = new Request();
-        $this->model = $model;
     }
 
     public function getRoutes(): array
