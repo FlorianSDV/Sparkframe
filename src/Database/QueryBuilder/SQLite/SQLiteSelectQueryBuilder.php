@@ -7,6 +7,7 @@ use Sparkframe\Database\QueryBuilder\SelectQueryBuilder;
 class SQLiteSelectQueryBuilder extends SqliteQueryBuilder implements SelectQueryBuilder
 {
     protected array $select_columns = ['*'];
+    protected int|null $limit_amount = null;
 
     public function select(string ...$column_names): SQLiteSelectQueryBuilder
     {
@@ -26,6 +27,7 @@ class SQLiteSelectQueryBuilder extends SqliteQueryBuilder implements SelectQuery
         $query_string = $this->getSelectPart();
         $query_string .= $this->getFromPart();
         $query_string .= $this->getWherePart();
+        $query_string .= $this->getLimitPart();
 
         return $query_string;
     }
@@ -54,5 +56,24 @@ class SQLiteSelectQueryBuilder extends SqliteQueryBuilder implements SelectQuery
     {
         $query = $this->getQuery();
         return $this->dataBaseConnection->query($query)->fetchAll();
+    }
+
+    /**
+     * @param int $limit_amount
+     * @return SQLiteSelectQueryBuilder
+     */
+    public function limit(int $limit_amount): SQLiteSelectQueryBuilder
+    {
+        $this->limit_amount = $limit_amount;
+        return $this;
+    }
+
+    private function getLimitPart(): string
+    {
+        if ($this->limit_amount == null) {
+            return '';
+        }
+
+        return " limit $this->limit_amount";
     }
 }
