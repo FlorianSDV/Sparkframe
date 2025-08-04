@@ -2,11 +2,14 @@
 
 namespace Sparkframe\Database\QueryBuilder\SQLite;
 
+use Exception;
 use PDO;
+use Sparkframe\Database\QueryBuilder\QueryWithWhere;
 use Sparkframe\Database\QueryBuilder\SelectQueryBuilder;
 
-class SQLiteSelectQueryBuilder extends SqliteQueryBuilder implements SelectQueryBuilder
+class SQLiteSelectQueryBuilder extends SqliteQueryBuilder implements SelectQueryBuilder, QueryWithWhere
 {
+    use SQLiteWhereQueryTrait;
     protected array $select_columns = ['*'];
     protected int|null $limit_amount = null;
 
@@ -23,6 +26,9 @@ class SQLiteSelectQueryBuilder extends SqliteQueryBuilder implements SelectQuery
         return $this;
     }
 
+    /**
+     * @throws Exception
+     */
     public function getQuery(): string
     {
         $query_string = $this->getSelectPart();
@@ -53,6 +59,9 @@ class SQLiteSelectQueryBuilder extends SqliteQueryBuilder implements SelectQuery
         return $select_string . ' ';
     }
 
+    /**
+     * @throws Exception
+     */
     function execute(): array
     {
         $query_string = $this->getQuery();
