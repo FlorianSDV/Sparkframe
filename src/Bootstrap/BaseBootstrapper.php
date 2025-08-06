@@ -6,7 +6,7 @@ require __DIR__ . '/../Tools/Constants.php';
 
 use Exception;
 use Sparkframe\Database\BaseDatabaseInfoCollection;
-use Sparkframe\Database\DatabaseConnectionFactory;
+use Sparkframe\Database\DatabaseWrapperFactory;
 
 abstract class BaseBootstrapper
 {
@@ -54,11 +54,11 @@ abstract class BaseBootstrapper
     /**
      * @throws Exception
      */
-    public function setupDatabaseConnections(BaseDatabaseInfoCollection $baseDatabaseInfoCollection): void
+    public function setupDatabaseWrappers(BaseDatabaseInfoCollection $baseDatabaseInfoCollection): void
     {
         foreach ($baseDatabaseInfoCollection->getDatabaseInfoCollection() as $database_name => $base_database_info) {
-            $database_connection = DatabaseConnectionFactory::createDatabaseConnection($base_database_info);
-            Globals::addDatabaseConnection($database_name, $database_connection);
+            $databaseWrapper = DatabaseWrapperFactory::createDatabaseWrapper($base_database_info);
+            Globals::addDatabaseWrapper($database_name, $databaseWrapper);
         }
     }
 

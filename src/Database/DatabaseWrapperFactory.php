@@ -4,12 +4,12 @@ namespace Sparkframe\Database;
 
 use Exception;
 use Pdo;
-class DatabaseConnectionFactory
+class DatabaseWrapperFactory
 {
     /**
      * @throws Exception
      */
-    public static function createDatabaseConnection(DatabaseInfo $databaseInfo): DataBaseConnection
+    public static function createDatabaseWrapper(DatabaseInfo $databaseInfo): DatabaseWrapper
     {
         $pdo = Pdo::connect(
             $databaseInfo->getDatabaseUrl(),
@@ -18,7 +18,7 @@ class DatabaseConnectionFactory
         );
         switch ($pdo::class) {
             case Pdo\Sqlite::class:
-                return new SqliteDatabaseConnection($pdo);
+                return new SqliteDatabaseWrapper($pdo);
             default:
                 throw new Exception('Db type not allowed');
         }

@@ -7,7 +7,7 @@ use PDOStatement;
 use Sparkframe\Database\QueryBuilder\SQLite\SQLiteSelectQueryBuilder;
 use Sparkframe\Database\QueryBuilder\SQLite\SQLiteInsertQueryBuilder;
 
-readonly class SqliteDatabaseConnection implements DataBaseConnection
+readonly class SqliteDatabaseWrapper implements DatabaseWrapper
 {
     public function __construct(protected Sqlite $pdo)
     {

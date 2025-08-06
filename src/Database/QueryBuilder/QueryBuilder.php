@@ -2,11 +2,11 @@
 
 namespace Sparkframe\Database\QueryBuilder;
 
-use Sparkframe\Database\DataBaseConnection;
+use Sparkframe\Database\DatabaseWrapper;
 
 abstract class QueryBuilder
 {
-    public function __construct(protected DataBaseConnection $dataBaseConnection, protected string $target_table_name)
+    public function __construct(protected DatabaseWrapper $databaseWrapper, protected string $target_table_name)
     {
     }
 
