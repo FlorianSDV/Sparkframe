@@ -66,7 +66,7 @@ class SQLiteSelectQueryBuilder extends SQLiteQueryBuilder implements SelectQuery
     function execute(): array
     {
         $query_string = $this->getQuery();
-        $query = $this->databaseWrapper
+        $query = $this->PDO
             ->prepare($query_string);
         $query->execute($this->getPreparedWherePartStatements());
         return $query->fetchAll(PDO::FETCH_ASSOC);

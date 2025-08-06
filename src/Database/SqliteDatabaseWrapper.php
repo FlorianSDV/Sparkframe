@@ -19,23 +19,13 @@ readonly class SqliteDatabaseWrapper implements DatabaseWrapper
         return $this->pdo;
     }
 
-    public function prepare(string $query_string): false|PDOStatement
-    {
-        return $this->pdo->prepare($query_string);
-    }
-
-    public function getLastInsertId(): string|int
-    {
-        return $this->pdo->lastInsertId();
-    }
-
     public function selectQuery(string $from_table_name): SQLiteSelectQueryBuilder
     {
-        return new SQLiteSelectQueryBuilder($this, $from_table_name);
+        return new SQLiteSelectQueryBuilder($this->pdo, $from_table_name);
     }
 
     public function insertQuery(string $insert_into_table_name, string $entity_class): SQLiteInsertQueryBuilder
     {
-        return new SQLiteInsertQueryBuilder($this, $insert_into_table_name, $entity_class);
+        return new SQLiteInsertQueryBuilder($this->pdo, $insert_into_table_name, $entity_class);
     }
 }

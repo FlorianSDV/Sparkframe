@@ -3,7 +3,7 @@
 namespace Sparkframe\Database\QueryBuilder\SQLite;
 
 use Exception;
-use Sparkframe\Database\DatabaseWrapper;
+use PDO;
 use Sparkframe\Database\QueryBuilder\InsertQueryBuilder;
 use Sparkframe\Entity\Entity;
 
@@ -15,10 +15,10 @@ class SQLiteInsertQueryBuilder extends SQLiteQueryBuilder implements InsertQuery
     /** @var Entity[] $this ->entities */
     private array $entities = [];
 
-    public function __construct(DatabaseWrapper $databaseWrapper, string $target_table_name, string $entity_class)
+    public function __construct(PDO $PDO, string $target_table_name, string $entity_class)
     {
         $this->entity_class = $entity_class;
-        parent::__construct($databaseWrapper, $target_table_name);
+        parent::__construct($PDO, $target_table_name);
     }
 
     /**
@@ -84,7 +84,7 @@ class SQLiteInsertQueryBuilder extends SQLiteQueryBuilder implements InsertQuery
         $sql = $this->getQuery($columns);
 
         try {
-            $pdo = $this->databaseWrapper->getPdo();
+            $pdo = $this->PDO;
             $pdo->beginTransaction();
             $stmt = $pdo->prepare($sql);
 
