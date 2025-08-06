@@ -5,6 +5,7 @@ namespace Sparkframe\Database;
 use Pdo\Sqlite;
 use PDOStatement;
 use Sparkframe\Database\QueryBuilder\SQLite\SQLiteSelectQueryBuilder;
+use Sparkframe\Database\QueryBuilder\SQLite\SQLiteInsertQueryBuilder;
 
 readonly class SqliteDatabaseConnection implements DataBaseConnection
 {
@@ -18,8 +19,18 @@ readonly class SqliteDatabaseConnection implements DataBaseConnection
         return $this->pdo->prepare($query_string);
     }
 
+    public function getLastInsertId(): string|int
+    {
+        return $this->pdo->lastInsertId();
+    }
+
     public function selectQuery(string $from_table_name): SQLiteSelectQueryBuilder
     {
         return new SQLiteSelectQueryBuilder($this, $from_table_name);
+    }
+
+    public function insertQuery(string $insert_into_table_name): SQLiteInsertQueryBuilder
+    {
+        return new SQLiteInsertQueryBuilder($this, $insert_into_table_name);
     }
 }

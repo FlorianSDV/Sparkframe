@@ -5,6 +5,7 @@ namespace Sparkframe\Model;
 use Exception;
 use Sparkframe\Bootstrap\Globals;
 use Sparkframe\Database\DataBaseConnection;
+use Sparkframe\Database\QueryBuilder\InsertQueryBuilder;
 use Sparkframe\Database\QueryBuilder\SelectQueryBuilder;
 use Sparkframe\Entity\Entity;
 
@@ -38,5 +39,17 @@ class Model
         }
         
         return $this->database_connection->selectQuery($this::TABLE_NAME);
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function insertQuery(): InsertQueryBuilder
+    {
+        if (!$this->assertReadyForQuery()){
+            throw new Exception('Cannot create query without database connection');
+        }
+
+        return $this->database_connection->insertQuery($this::TABLE_NAME);
     }
 }
