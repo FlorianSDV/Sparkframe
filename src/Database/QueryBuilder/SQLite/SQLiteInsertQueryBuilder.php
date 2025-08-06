@@ -5,52 +5,18 @@ namespace Sparkframe\Database\QueryBuilder\SQLite;
 use Exception;
 use PDO;
 use Sparkframe\Database\QueryBuilder\InsertQueryBuilder;
+use Sparkframe\Database\QueryBuilder\InsertQueryTrait;
 use Sparkframe\Entity\Entity;
 
 class SQLiteInsertQueryBuilder extends SQLiteQueryBuilder implements InsertQueryBuilder
 {
-    /** @var class-string<Entity> $this ->entity_class */
-    private string $entity_class;
-
-    /** @var Entity[] $this ->entities */
-    private array $entities = [];
+    use InsertQueryTrait;
 
     public function __construct(PDO $PDO, string $target_table_name, string $entity_class)
     {
         $this->entity_class = $entity_class;
         parent::__construct($PDO, $target_table_name);
     }
-
-    /**
-     * @throws Exception
-     */
-    public function addEntity(Entity $entity): InsertQueryBuilder
-    {
-        // Todo: dit kan naar een andere class of een trait. Het kan hoe dan ook hergebruikt worden.
-        // Todo: dit geld ook voor de clearEntities methode. En voor de $entities property.
-        $class_name = $entity::class;
-        if ($this->entity_class !== $class_name) {
-            throw new Exception("Entity class $class_name does not match the expected class {$this->entity_class}.");
-        }
-        $this->entities[] = $entity;
-
-        return $this;
-    }
-
-    public function clearEntities(): InsertQueryBuilder
-    {
-        unset($this->entities);
-
-        return $this;
-    }
-
-    public function clearEntityClass(): InsertQueryBuilder
-    {
-        unset($this->entity_class);
-
-        return $this;
-    }
-
 
     /**
      * Generates the SQL query string for inserting a single entity into the target table.
@@ -79,6 +45,7 @@ class SQLiteInsertQueryBuilder extends SQLiteQueryBuilder implements InsertQuery
             throw new Exception("Tried to execute insert query without Entity class being set.");
         }
 
+        /** @var class-string<Entity> $this ->entity_class */
         $columns = $this->entity_class::getColumnNames();
 
         $sql = $this->getQuery($columns);
