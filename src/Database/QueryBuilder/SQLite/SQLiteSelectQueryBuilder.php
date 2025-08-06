@@ -7,7 +7,7 @@ use PDO;
 use Sparkframe\Database\QueryBuilder\QueryWithWhere;
 use Sparkframe\Database\QueryBuilder\SelectQueryBuilder;
 
-class SQLiteSelectQueryBuilder extends SqliteQueryBuilder implements SelectQueryBuilder, QueryWithWhere
+class SQLiteSelectQueryBuilder extends SQLiteQueryBuilder implements SelectQueryBuilder, QueryWithWhere
 {
     use SQLiteWhereQueryTrait;
     protected array $select_columns = ['*'];
@@ -32,7 +32,7 @@ class SQLiteSelectQueryBuilder extends SqliteQueryBuilder implements SelectQuery
     public function getQuery(): string
     {
         $query_string = $this->getSelectPart();
-        $query_string .= $this->getFromPart();
+        $query_string .= 'from '.$this->getTargetTable().' ';
         $query_string .= $this->getPreparedWherePart();
         $query_string .= $this->getLimitPart();
 
