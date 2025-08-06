@@ -4,7 +4,7 @@ namespace Sparkframe\Bootstrap;
 
 use Exception;
 use Sparkframe\Controller\Controller;
-use Sparkframe\Database\DataBaseConnection;
+use Sparkframe\Database\DatabaseWrapper;
 
 class Globals
 {
@@ -12,7 +12,7 @@ class Globals
     private static string $root_dir;
 
     /**
-     * @var DataBaseConnection[]
+     * @var DatabaseWrapper[]
      */
     private static array $databases;
     private Router $router;
@@ -121,12 +121,12 @@ class Globals
         }
     }
 
-    public static function addDatabaseConnection(string $database_name, DataBaseConnection $PDO): void
+    public static function addDatabaseWrapper(string $database_name, DatabaseWrapper $databaseWrapper): void
     {
-        static::$databases[$database_name] = $PDO;
+        static::$databases[$database_name] = $databaseWrapper;
     }
 
-    public static function getDatabaseConnection(string $database_name): ?DataBaseConnection
+    public static function getDatabaseWrapper(string $database_name): ?DatabaseWrapper
     {
         return static::$databases[$database_name];
     }

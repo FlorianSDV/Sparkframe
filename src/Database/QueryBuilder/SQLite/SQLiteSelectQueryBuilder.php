@@ -46,6 +46,7 @@ class SQLiteSelectQueryBuilder extends SQLiteQueryBuilder implements SelectQuery
      */
     public function getSelectPart(): string
     {
+        // Todo: Prevent SQL injection by using prepared statements.
         $select_string = 'select';
         foreach ($this->select_columns as $key => $select_column) {
             $select_string .= " $select_column";
@@ -65,7 +66,7 @@ class SQLiteSelectQueryBuilder extends SQLiteQueryBuilder implements SelectQuery
     function execute(): array
     {
         $query_string = $this->getQuery();
-        $query = $this->dataBaseConnection
+        $query = $this->databaseWrapper
             ->prepare($query_string);
         $query->execute($this->getPreparedWherePartStatements());
         return $query->fetchAll(PDO::FETCH_ASSOC);
