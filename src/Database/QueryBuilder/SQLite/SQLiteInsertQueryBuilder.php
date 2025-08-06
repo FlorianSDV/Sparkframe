@@ -3,50 +3,60 @@
 namespace Sparkframe\Database\QueryBuilder\SQLite;
 
 use Exception;
+use Sparkframe\Database\DataBaseConnection;
 use Sparkframe\Database\QueryBuilder\InsertQueryBuilder;
 use Sparkframe\Entity\Entity;
 
 class SQLiteInsertQueryBuilder extends SQLiteQueryBuilder implements InsertQueryBuilder
 {
-    // todo: implement a way to add multiple entities at once, maybe by using an array of entities
-    private ?Entity $entity;
-    public function addEntity(Entity $entity): InsertQueryBuilder
+    /** @var class-string<Entity> $this ->entity_class */
+    private string $entity_class;
+
+    /** @var Entity[] $this ->entities */
+    private array $entities = [];
+
+    public function __construct(DataBaseConnection $dataBaseConnection, string $target_table_name, string $entity_class)
     {
-        $this->entity = $entity;
-
-        return $this;
-    }
-
-    public function clearEntity(): InsertQueryBuilder
-    {
-        unset($this->entity);
-
-        return $this;
+        $this->entity_class = $entity_class;
+        parent::__construct($dataBaseConnection, $target_table_name);
     }
 
     /**
      * @throws Exception
      */
-    function execute(): void
+    public function addEntity(Entity $entity): InsertQueryBuilder
     {
-        if (empty($this->entity)) {
-            throw new Exception("Tried to execute insert query without any Entities set.");
+        // Todo: dit kan naar een andere class of een trait. Het kan hoe dan ook hergebruikt worden.
+        // Todo: dit geld ook voor de clearEntities methode. En voor de $entities property.
+        $class_name = $entity::class;
+        if ($this->entity_class !== $class_name) {
+            throw new Exception("Entity class $class_name does not match the expected class {$this->entity_class}.");
         }
+        $this->entities[] = $entity;
 
-        $columns = $this->entity::getColumnNames();
-
-        $sql = $this->getQuery($columns);
-        $actual_values = $this->getActualValues($columns);
-
-        $this->dataBaseConnection
-            ->prepare($sql)
-            ->execute($actual_values);
-
-        $insert_id = $this->dataBaseConnection->getLastInsertId();
-        $this->entity->setId($insert_id);
-        $this->clearEntity();
+        return $this;
     }
 
+    public function clearEntities(): InsertQueryBuilder
+    {
+        unset($this->entities);
+
+        return $this;
+    }
+
+    public function clearEntityClass(): InsertQueryBuilder
+    {
+        unset($this->entity_class);
+
+        return $this;
+    }
+
+
+    /**
+     * Generates the SQL query string for inserting a single entity into the target table.
+     * @param array $columns
+     * @return string
+     */
     private function getQuery(array $columns): string
     {
         $sql_columns = implode(', ', $columns);
@@ -57,22 +67,39 @@ class SQLiteInsertQueryBuilder extends SQLiteQueryBuilder implements InsertQuery
     }
 
     /**
-     * @param array $columns
-     * @return array
+     * @throws Exception
      */
-    public function getActualValues(array $columns): array
+    function execute(): void
     {
-        $values = [];
-        foreach ($columns as $column) {
-            if (
-                !property_exists($this->entity, $column) ||
-                !isset($this->entity->{$column})
-            ) {
-                $values[] = null;
-                continue;
-            }
-            $values[] = $this->entity->{$column};
+        if (empty($this->entities)) {
+            throw new Exception("Tried to execute insert query without any Entities set.");
         }
-        return $values;
+
+        if (empty($this->entity_class)) {
+            throw new Exception("Tried to execute insert query without Entity class being set.");
+        }
+
+        $columns = $this->entity_class::getColumnNames();
+
+        $sql = $this->getQuery($columns);
+
+        try {
+            $pdo = $this->dataBaseConnection->getPdo();
+            $pdo->beginTransaction();
+            $stmt = $pdo->prepare($sql);
+
+            foreach ($this->entities as $entity) {
+                $actual_values = $entity->getActualValues();
+                $stmt->execute($actual_values);
+                $entity->setId($pdo->lastInsertId());
+            }
+            $pdo->commit();
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            throw new Exception("Failed to execute insert query: " . $e->getMessage(), 0, $e);
+        }
+
+        $this->clearEntities();
+        $this->clearEntityClass();
     }
 }

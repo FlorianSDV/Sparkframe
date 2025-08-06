@@ -25,4 +25,20 @@ abstract class Entity
             }
         }
     }
+
+    public function getActualValues(): array
+    {
+        $values = [];
+        foreach (self::getColumnNames() as $column) {
+            if (
+                !property_exists($this, $column) ||
+                !isset($this->{$column})
+            ) {
+                $values[] = null;
+                continue;
+            }
+            $values[] = $this->{$column};
+        }
+        return $values;
+    }
 }

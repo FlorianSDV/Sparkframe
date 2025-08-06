@@ -14,6 +14,11 @@ readonly class SqliteDatabaseConnection implements DataBaseConnection
 
     }
 
+    public function getPdo(): Sqlite
+    {
+        return $this->pdo;
+    }
+
     public function prepare(string $query_string): false|PDOStatement
     {
         return $this->pdo->prepare($query_string);
@@ -29,8 +34,8 @@ readonly class SqliteDatabaseConnection implements DataBaseConnection
         return new SQLiteSelectQueryBuilder($this, $from_table_name);
     }
 
-    public function insertQuery(string $insert_into_table_name): SQLiteInsertQueryBuilder
+    public function insertQuery(string $insert_into_table_name, string $entity_class): SQLiteInsertQueryBuilder
     {
-        return new SQLiteInsertQueryBuilder($this, $insert_into_table_name);
+        return new SQLiteInsertQueryBuilder($this, $insert_into_table_name, $entity_class);
     }
 }

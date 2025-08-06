@@ -14,7 +14,7 @@ class Model
     protected ?DataBaseConnection $database_connection = null;
     protected const string TABLE_NAME = '';
     
-    public function __construct(protected Entity $entity, ?string $database_name = null)
+    public function __construct(protected string $entity_class, ?string $database_name = null)
     {
         $this->database_connection = null;
         if ($database_name !== null) {
@@ -50,6 +50,6 @@ class Model
             throw new Exception('Cannot create query without database connection');
         }
 
-        return $this->database_connection->insertQuery($this::TABLE_NAME);
+        return $this->database_connection->insertQuery($this::TABLE_NAME, $this->entity_class);
     }
 }
