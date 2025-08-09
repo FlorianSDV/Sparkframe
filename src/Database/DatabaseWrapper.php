@@ -5,6 +5,7 @@ namespace Sparkframe\Database;
 use PDO;
 use Sparkframe\Database\QueryBuilder\SelectQueryBuilder;
 use Sparkframe\Database\QueryBuilder\InsertQueryBuilder;
+use Sparkframe\Database\QueryBuilder\UpdateQueryBuilder;
 
 /**
  * Interface DatabaseWrapper
@@ -13,8 +14,9 @@ use Sparkframe\Database\QueryBuilder\InsertQueryBuilder;
  */
 interface DatabaseWrapper
 {
-    public function getPdo(): PDO;
+    public function getPDO(): PDO;
     //todo: implement various methods for building queries
     public function selectQuery(string $from_table_name): SelectQueryBuilder;
     public function insertQuery(string $insert_into_table_name, string $entity_class): InsertQueryBuilder;
+    public function updateQuery(string $update_table_name, string $entity_class): UpdateQueryBuilder;
 }

@@ -3,29 +3,35 @@
 namespace Sparkframe\Database;
 
 use Pdo\Sqlite;
-use PDOStatement;
 use Sparkframe\Database\QueryBuilder\SQLite\SQLiteSelectQueryBuilder;
 use Sparkframe\Database\QueryBuilder\SQLite\SQLiteInsertQueryBuilder;
+use Sparkframe\Database\QueryBuilder\SQLite\SQLiteUpdateQueryBuilder;
+use Sparkframe\Database\QueryBuilder\UpdateQueryBuilder;
 
 readonly class SqliteDatabaseWrapper implements DatabaseWrapper
 {
-    public function __construct(protected Sqlite $pdo)
+    public function __construct(protected Sqlite $PDO)
     {
 
     }
 
-    public function getPdo(): Sqlite
+    public function getPDO(): Sqlite
     {
-        return $this->pdo;
+        return $this->PDO;
     }
 
     public function selectQuery(string $from_table_name): SQLiteSelectQueryBuilder
     {
-        return new SQLiteSelectQueryBuilder($this->pdo, $from_table_name);
+        return new SQLiteSelectQueryBuilder($this->PDO, $from_table_name);
     }
 
     public function insertQuery(string $insert_into_table_name, string $entity_class): SQLiteInsertQueryBuilder
     {
-        return new SQLiteInsertQueryBuilder($this->pdo, $insert_into_table_name, $entity_class);
+        return new SQLiteInsertQueryBuilder($this->PDO, $insert_into_table_name, $entity_class);
+    }
+
+    public function updateQuery(string $update_table_name, string $entity_class): UpdateQueryBuilder
+    {
+        return new SQLiteUpdateQueryBuilder($this->PDO, $update_table_name, $entity_class);
     }
 }

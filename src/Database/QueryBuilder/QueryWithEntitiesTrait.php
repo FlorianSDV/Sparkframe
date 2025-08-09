@@ -5,7 +5,7 @@ namespace Sparkframe\Database\QueryBuilder;
 use Exception;
 use Sparkframe\Entity\Entity;
 
-trait InsertQueryTrait
+trait QueryWithEntitiesTrait
 {
     /** @var class-string<Entity> $this ->entity_class */
     private string $entity_class;
