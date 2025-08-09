@@ -61,4 +61,9 @@ trait SQLiteWhereQueryTrait
 
         return $prepared_statements;
     }
+
+    public function clearWhere(): void
+    {
+        $this->where_conditions = [];
+    }
 }
