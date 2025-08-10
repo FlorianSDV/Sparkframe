@@ -18,6 +18,4 @@ interface InsertQueryBuilder
     function addEntity(Entity $entity): self;
 
     function clearEntities(): self;
-
-    function clearEntityClass(): self;
 }

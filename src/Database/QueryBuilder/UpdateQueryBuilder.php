@@ -17,6 +17,4 @@ interface UpdateQueryBuilder
     function addEntity(Entity $entity): self;
 
     function clearEntities(): self;
-
-    function clearEntityClass(): self;
 }
