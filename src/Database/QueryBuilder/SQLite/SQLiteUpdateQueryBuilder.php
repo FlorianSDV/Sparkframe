@@ -14,8 +14,8 @@ class SQLiteUpdateQueryBuilder extends SQLiteQueryBuilder implements UpdateQuery
     use SQLiteWhereQueryTrait;
     use QueryWithEntitiesTrait;
 
-    /** @var class-string<Entity> $this ->entity_class */
-    private string $entity_class;
+    /** @var class-string<Entity> */
+    protected string $entity_class;
 
     public function __construct(PDO $PDO, string $target_table_name, string $entity_class)
     {
@@ -68,7 +68,6 @@ class SQLiteUpdateQueryBuilder extends SQLiteQueryBuilder implements UpdateQuery
      */
     private function getQuery($primary_key_column_name): string
     {
-        /** @var class-string<Entity> $this ->entity_class */
         $columns = $this->entity_class::getColumnNames();
 
         $set_part = '';
@@ -91,7 +90,6 @@ class SQLiteUpdateQueryBuilder extends SQLiteQueryBuilder implements UpdateQuery
     protected function cleanUp(): void
     {
         $this->clearEntities();
-        $this->clearEntityClass();
         $this->clearWhere();
     }
 }

@@ -7,8 +7,8 @@ use Sparkframe\Entity\Entity;
 
 trait QueryWithEntitiesTrait
 {
-    /** @var class-string<Entity> $this ->entity_class */
-    private string $entity_class;
+    /** @var class-string<Entity> */
+    protected string $entity_class;
 
     /** @var Entity[] $this ->entities */
     private array $entities = [];
@@ -30,13 +30,6 @@ trait QueryWithEntitiesTrait
     public function clearEntities(): self
     {
         unset($this->entities);
-
-        return $this;
-    }
-
-    public function clearEntityClass(): self
-    {
-        unset($this->entity_class);
 
         return $this;
     }
