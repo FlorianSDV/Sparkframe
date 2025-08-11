@@ -2,6 +2,8 @@
 
 namespace Sparkframe\Entity;
 
+use Exception;
+
 abstract class Entity
 {
     protected const array COLUMN_DESCRIPTIONS = [];
@@ -13,31 +15,46 @@ abstract class Entity
 
     public static function getColumnDescriptions(): array
     {
-        return self::COLUMN_DESCRIPTIONS;
+        return static::COLUMN_DESCRIPTIONS;
     }
 
-    public function setId(string|int $id): void
+    /**
+     * @throws Exception
+     */
+    public static function getPrimaryKeyColumnName(): string
     {
-        foreach ($this::getColumnDescriptions() as $key => $column) {
+        foreach (static::getColumnDescriptions() as $key => $column) {
             if (is_array($column) && in_array('primary', $column)) {
-                $this->$key = $id;
-                break;
+                return $key;
             }
         }
+        throw new Exception("No primary key set");
     }
 
-    public function getActualValues(): array
+    /**
+     * @throws Exception
+     */
+    public function setId(string|int $id): void
+    {
+        $primary = $this->getPrimaryKeyColumnName();
+        $this->$primary = $id;
+    }
+
+    /**
+     * @return array
+     */
+    public function getValuesArray(): array
     {
         $values = [];
-        foreach (self::getColumnNames() as $column) {
+        foreach (static::getColumnNames() as $column) {
+            $value = null;
             if (
-                !property_exists($this, $column) ||
-                !isset($this->{$column})
+                property_exists($this, $column) &&
+                isset($this->{$column})
             ) {
-                $values[] = null;
-                continue;
+                $value = $this->$column;
             }
-            $values[] = $this->{$column};
+            $values[$column] = $value;
         }
         return $values;
     }

@@ -68,6 +68,8 @@ class SQLiteSelectQueryBuilder extends SQLiteQueryBuilder implements SelectQuery
         $query = $this->PDO
             ->prepare($query_string);
         $query->execute($this->getPreparedWherePartStatements());
+        $this->cleanUp();
+        // Todo: implement hydration
         return $query->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -88,5 +90,11 @@ class SQLiteSelectQueryBuilder extends SQLiteQueryBuilder implements SelectQuery
         }
 
         return " limit $this->limit_amount";
+    }
+
+    protected function cleanUp(): void
+    {
+        $this->select_columns = ['*'];
+        $this->clearWhere();
     }
 }

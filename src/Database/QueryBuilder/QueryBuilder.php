@@ -13,4 +13,6 @@ abstract class QueryBuilder
     abstract public function getTargetTable(): string;
 
     abstract function execute();
+
+    abstract protected function cleanUp(): void;
 }
