@@ -7,7 +7,7 @@ use Sparkframe\Bootstrap\Globals;
 use Sparkframe\Database\DatabaseWrapper;
 use Sparkframe\Database\QueryBuilder\InsertQueryBuilder;
 use Sparkframe\Database\QueryBuilder\SelectQueryBuilder;
-use Sparkframe\Entity\Entity;
+use Sparkframe\Database\QueryBuilder\UpdateQueryBuilder;
 
 class Model
 {
@@ -51,5 +51,17 @@ class Model
         }
 
         return $this->database_wrapper->insertQuery($this::TABLE_NAME, $this->entity_class);
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function updateQuery(): UpdateQueryBuilder
+    {
+        if (!$this->assertReadyForQuery()){
+            throw new Exception('Cannot create query without database connection');
+        }
+
+        return $this->database_wrapper->updateQuery($this::TABLE_NAME, $this->entity_class);
     }
 }

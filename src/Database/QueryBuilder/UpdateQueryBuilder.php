@@ -1,12 +1,11 @@
 <?php
-declare(strict_types=1);
 
 namespace Sparkframe\Database\QueryBuilder;
 
 use PDO;
 use Sparkframe\Entity\Entity;
 
-interface InsertQueryBuilder
+interface UpdateQueryBuilder
 {
     public function __construct(PDO $PDO, string $target_table_name, string $entity_class);
 
