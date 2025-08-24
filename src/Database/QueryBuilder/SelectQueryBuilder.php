@@ -2,7 +2,7 @@
 
 namespace Sparkframe\Database\QueryBuilder;
 
-interface SelectQueryBuilder
+interface SelectQueryBuilder extends QueryWithWhere
 {
     /**
      * @param string ...$column_names any number of column names

@@ -4,10 +4,9 @@ namespace Sparkframe\Database\QueryBuilder\SQLite;
 
 use Exception;
 use PDO;
-use Sparkframe\Database\QueryBuilder\QueryWithWhere;
 use Sparkframe\Database\QueryBuilder\SelectQueryBuilder;
 
-class SQLiteSelectQueryBuilder extends SQLiteQueryBuilder implements SelectQueryBuilder, QueryWithWhere
+class SQLiteSelectQueryBuilder extends SQLiteQueryBuilder implements SelectQueryBuilder
 {
     use SQLiteWhereQueryTrait;
     protected array $select_columns = ['*'];
