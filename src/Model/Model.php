@@ -5,6 +5,7 @@ namespace Sparkframe\Model;
 use Exception;
 use Sparkframe\Bootstrap\Globals;
 use Sparkframe\Database\DatabaseWrapper;
+use Sparkframe\Database\QueryBuilder\DeleteQueryBuilder;
 use Sparkframe\Database\QueryBuilder\InsertQueryBuilder;
 use Sparkframe\Database\QueryBuilder\SelectQueryBuilder;
 use Sparkframe\Database\QueryBuilder\UpdateQueryBuilder;
@@ -63,5 +64,14 @@ class Model
         }
 
         return $this->database_wrapper->updateQuery($this::TABLE_NAME, $this->entity_class);
+    }
+
+    public function deleteQuery(): DeleteQueryBuilder
+    {
+        if (!$this->assertReadyForQuery()){
+            throw new Exception('Cannot create query without database connection');
+        }
+
+        return $this->database_wrapper->deleteQuery($this::TABLE_NAME, $this->entity_class);
     }
 }
