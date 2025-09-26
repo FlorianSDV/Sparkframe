@@ -5,11 +5,10 @@ namespace Sparkframe\Database\QueryBuilder\SQLite;
 use Exception;
 use PDO;
 use Sparkframe\Database\QueryBuilder\QueryWithEntitiesTrait;
-use Sparkframe\Database\QueryBuilder\QueryWithWhere;
 use Sparkframe\Database\QueryBuilder\UpdateQueryBuilder;
 use Sparkframe\Entity\Entity;
 
-class SQLiteUpdateQueryBuilder extends SQLiteQueryBuilder implements UpdateQueryBuilder, QueryWithWhere
+class SQLiteUpdateQueryBuilder extends SQLiteQueryBuilder implements UpdateQueryBuilder
 {
     use SQLiteWhereQueryTrait;
     use QueryWithEntitiesTrait;
