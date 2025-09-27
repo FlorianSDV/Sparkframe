@@ -17,7 +17,7 @@ interface DatabaseWrapper
 {
     public function getPDO(): PDO;
     //todo: implement various methods for building queries
-    public function selectQuery(string $from_table_name): SelectQueryBuilder;
+    public function selectQuery(string $from_table_name, string $entity_class): SelectQueryBuilder;
     public function insertQuery(string $insert_into_table_name, string $entity_class): InsertQueryBuilder;
     public function updateQuery(string $update_table_name, string $entity_class): UpdateQueryBuilder;
     public function deleteQuery(string $delete_from_table_name, string $entity_class): DeleteQueryBuilder;

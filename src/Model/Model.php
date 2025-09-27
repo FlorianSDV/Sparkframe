@@ -39,7 +39,7 @@ class Model
             throw new Exception('Cannot create query without database connection');
         }
         
-        return $this->database_wrapper->selectQuery($this::TABLE_NAME);
+        return $this->database_wrapper->selectQuery($this::TABLE_NAME, $this->entity_class);
     }
 
     /**
