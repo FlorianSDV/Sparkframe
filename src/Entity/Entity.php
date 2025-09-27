@@ -8,6 +8,17 @@ abstract class Entity
 {
     protected const array COLUMN_DESCRIPTIONS = [];
 
+
+    public function __construct(array $columns_and_values = [])
+    {
+        $column_names = static::getColumnNames();
+        foreach ($columns_and_values as $column => $property) {
+            if (in_array($column, $column_names)) {
+                $this->$column = $property;
+            }
+        }
+    }
+
     public static function getColumnNames(): array
     {
         return array_keys(static::getColumnDescriptions());

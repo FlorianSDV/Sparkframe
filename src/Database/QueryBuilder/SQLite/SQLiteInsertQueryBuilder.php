@@ -48,7 +48,6 @@ class SQLiteInsertQueryBuilder extends SQLiteQueryBuilder implements InsertQuery
             throw new Exception("Tried to execute insert query without Entity class being set.");
         }
 
-        /** @var class-string<Entity> $this ->entity_class */
         $columns = $this->entity_class::getColumnNames();
 
         $sql = $this->getQuery($columns);
