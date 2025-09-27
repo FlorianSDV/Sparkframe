@@ -19,9 +19,9 @@ readonly class SqliteDatabaseWrapper implements DatabaseWrapper
         return $this->PDO;
     }
 
-    public function selectQuery(string $from_table_name): SQLiteSelectQueryBuilder
+    public function selectQuery(string $from_table_name, string $entity_class): SQLiteSelectQueryBuilder
     {
-        return new SQLiteSelectQueryBuilder($this->PDO, $from_table_name);
+        return new SQLiteSelectQueryBuilder($this->PDO, $from_table_name, $entity_class);
     }
 
     public function insertQuery(string $insert_into_table_name, string $entity_class): SQLiteInsertQueryBuilder

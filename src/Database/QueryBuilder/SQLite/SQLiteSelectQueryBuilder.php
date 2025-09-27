@@ -5,12 +5,21 @@ namespace Sparkframe\Database\QueryBuilder\SQLite;
 use Exception;
 use PDO;
 use Sparkframe\Database\QueryBuilder\SelectQueryBuilder;
+use Sparkframe\Entity\Entity;
 
 class SQLiteSelectQueryBuilder extends SQLiteQueryBuilder implements SelectQueryBuilder
 {
     use SQLiteWhereQueryTrait;
     protected array $select_columns = ['*'];
     protected int|null $limit_amount = null;
+    /** @var class-string<Entity> */
+    protected string $entity_class;
+
+    public function __construct(PDO $PDO, string $target_table_name, string $entity_class)
+    {
+        $this->entity_class = $entity_class;
+        parent::__construct($PDO, $target_table_name);
+    }
 
     public function select(string ...$column_names): SQLiteSelectQueryBuilder
     {
@@ -67,9 +76,18 @@ class SQLiteSelectQueryBuilder extends SQLiteQueryBuilder implements SelectQuery
         $query = $this->PDO
             ->prepare($query_string);
         $query->execute($this->getPreparedWherePartStatements());
+        $result = $query->fetchAll(PDO::FETCH_ASSOC);
+
+        $hydrated_result = [];
+        $entity_class = $this->entity_class;
+        foreach ($result as $row) {
+            $hydrated_result[] = new $entity_class($row);
+        }
+
+
         $this->cleanUp();
         // Todo: implement hydration
-        return $query->fetchAll(PDO::FETCH_ASSOC);
+        return $hydrated_result;
     }
 
     /**
