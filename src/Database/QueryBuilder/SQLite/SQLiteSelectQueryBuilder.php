@@ -9,9 +9,9 @@ use Sparkframe\Entity\Entity;
 
 class SQLiteSelectQueryBuilder extends SQLiteQueryBuilder implements SelectQueryBuilder
 {
-    use SQLiteWhereQueryTrait;
     protected array $select_columns = ['*'];
     protected int|null $limit_amount = null;
+    protected array $where_conditions = [];
 
     /** @var class-string<Entity> */
     protected string $entity_class;
@@ -27,6 +27,63 @@ class SQLiteSelectQueryBuilder extends SQLiteQueryBuilder implements SelectQuery
         }
 
         return $this;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function where(array $filter_criteria): self
+    {
+        foreach ($filter_criteria as $column => $filter_criterion) {
+            if (!is_string($column)) {
+                throw new Exception('Column name must be a string!');
+            }
+            $this->where_conditions[] = [
+                'column' => $column,
+                'filter_criterion' => $filter_criterion
+            ];
+        }
+
+        return $this;
+    }
+
+    public function getPreparedWherePart(): string
+    {
+        if (count($this->where_conditions) == 0) {
+            return '';
+        }
+
+        $where_part = 'where';
+        foreach ($this->where_conditions as $key => $where_condition) {
+            $where_part .= " $where_condition[column] = :$where_condition[column]";
+
+            if (array_key_last($this->where_conditions) == $key) {
+                break;
+            }
+
+            $where_part .= ' and';
+        }
+
+        return $where_part;
+    }
+
+    public function getPreparedWherePartStatements(): array
+    {
+        if (count($this->where_conditions) == 0) {
+            return [];
+        }
+
+        $prepared_statements = [];
+        foreach ($this->where_conditions as $where_condition) {
+            $prepared_statements[$where_condition['column']] = $where_condition['filter_criterion'];
+        }
+
+        return $prepared_statements;
+    }
+
+    public function clearWhere(): void
+    {
+        $this->where_conditions = [];
     }
 
     /**
@@ -67,6 +124,10 @@ class SQLiteSelectQueryBuilder extends SQLiteQueryBuilder implements SelectQuery
      */
     function execute(): array
     {
+        if (empty($this->entity_class)) {
+            throw new Exception("Tried to execute select query without Entity class being set.");
+        }
+
         $query_string = $this->getQuery();
         $query = $this->PDO
             ->prepare($query_string);

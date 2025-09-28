@@ -2,7 +2,7 @@
 
 namespace Sparkframe\Database\QueryBuilder;
 
-interface SelectQueryBuilder extends QueryWithWhere
+interface SelectQueryBuilder
 {
     /**
      * @param string ...$column_names any number of column names
@@ -15,4 +15,20 @@ interface SelectQueryBuilder extends QueryWithWhere
      * @return self
      */
     public function limit(int $limit_amount): self;
+
+    /**
+     * @param array $filter_criteria
+     * @return self
+     */
+    public function where(array $filter_criteria): self;
+
+    /**
+     * @return string
+     */
+    public function getPreparedWherePart(): string;
+
+    /**
+     * @return array
+     */
+    public function getPreparedWherePartStatements(): array;
 }
