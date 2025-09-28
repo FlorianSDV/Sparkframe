@@ -4,15 +4,13 @@ namespace Sparkframe\Database\QueryBuilder;
 
 use PDO;
 
-abstract class QueryBuilder
+interface QueryBuilder
 {
-    public function __construct(protected PDO $PDO, protected string $target_table_name)
-    {
-    }
+    public function __construct(PDO $PDO, string $target_table_name, string $entity_class);
 
-    abstract public function getTargetTable(): string;
+    public function getTargetTable(): string;
 
-    abstract function execute();
+    public function execute();
 
-    abstract protected function cleanUp(): void;
+    public function cleanUp(): void;
 }
