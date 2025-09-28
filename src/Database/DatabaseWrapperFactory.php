@@ -11,7 +11,7 @@ class DatabaseWrapperFactory
     /**
      * @throws Exception
      */
-    public static function createDatabaseWrapper(DatabaseInfo $databaseInfo): DatabaseWrapper
+    public static function createDatabaseWrapper(DatabaseInfo $databaseInfo): DatabaseWrapperInterface
     {
         $pdo = Pdo::connect(
             $databaseInfo->getDatabaseUrl(),

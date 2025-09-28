@@ -6,7 +6,7 @@ namespace Sparkframe\Bootstrap;
 
 use Exception;
 use Sparkframe\Controller\Controller;
-use Sparkframe\Database\DatabaseWrapper;
+use Sparkframe\Database\DatabaseWrapperInterface;
 
 class Globals
 {
@@ -14,7 +14,7 @@ class Globals
     private static string $root_dir;
 
     /**
-     * @var DatabaseWrapper[]
+     * @var DatabaseWrapperInterface[]
      */
     private static array $databases;
     private Router $router;
@@ -123,12 +123,12 @@ class Globals
         }
     }
 
-    public static function addDatabaseWrapper(string $database_name, DatabaseWrapper $databaseWrapper): void
+    public static function addDatabaseWrapper(string $database_name, DatabaseWrapperInterface $databaseWrapper): void
     {
         static::$databases[$database_name] = $databaseWrapper;
     }
 
-    public static function getDatabaseWrapper(string $database_name): ?DatabaseWrapper
+    public static function getDatabaseWrapper(string $database_name): ?DatabaseWrapperInterface
     {
         return static::$databases[$database_name];
     }

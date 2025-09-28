@@ -6,15 +6,15 @@ namespace Sparkframe\Model;
 
 use Exception;
 use Sparkframe\Bootstrap\Globals;
-use Sparkframe\Database\DatabaseWrapper;
-use Sparkframe\Database\QueryBuilder\Builders\DeleteQueryBuilder;
-use Sparkframe\Database\QueryBuilder\Builders\InsertQueryBuilder;
-use Sparkframe\Database\QueryBuilder\Builders\SelectQueryBuilder;
-use Sparkframe\Database\QueryBuilder\Builders\UpdateQueryBuilder;
+use Sparkframe\Database\DatabaseWrapperInterface;
+use Sparkframe\Database\QueryBuilder\Builders\DeleteQueryBuilderInterface;
+use Sparkframe\Database\QueryBuilder\Builders\InsertQueryBuilderInterface;
+use Sparkframe\Database\QueryBuilder\Builders\SelectQueryBuilderInterface;
+use Sparkframe\Database\QueryBuilder\Builders\UpdateQueryBuilderInterface;
 
 class Model
 {
-    protected ?DatabaseWrapper $database_wrapper = null;
+    protected ?DatabaseWrapperInterface $database_wrapper = null;
     protected const string TABLE_NAME = '';
     
     public function __construct(protected string $entity_class, ?string $database_name = null)
@@ -27,7 +27,7 @@ class Model
 
     private function assertReadyForQuery(): bool
     {
-        $database_wrapper_correct = $this->database_wrapper instanceof DatabaseWrapper;
+        $database_wrapper_correct = $this->database_wrapper instanceof DatabaseWrapperInterface;
         $table_name_set = $this::TABLE_NAME !== '';
         return $database_wrapper_correct && $table_name_set;
     }
@@ -35,7 +35,7 @@ class Model
     /**
      * @throws Exception
      */
-    public function selectQuery(): SelectQueryBuilder
+    public function selectQuery(): SelectQueryBuilderInterface
     {
         if (!$this->assertReadyForQuery()){
             throw new Exception('Cannot create query without database connection');
@@ -47,7 +47,7 @@ class Model
     /**
      * @throws Exception
      */
-    public function insertQuery(): InsertQueryBuilder
+    public function insertQuery(): InsertQueryBuilderInterface
     {
         if (!$this->assertReadyForQuery()){
             throw new Exception('Cannot create query without database connection');
@@ -59,7 +59,7 @@ class Model
     /**
      * @throws Exception
      */
-    public function updateQuery(): UpdateQueryBuilder
+    public function updateQuery(): UpdateQueryBuilderInterface
     {
         if (!$this->assertReadyForQuery()){
             throw new Exception('Cannot create query without database connection');
@@ -68,7 +68,7 @@ class Model
         return $this->database_wrapper->updateQuery($this::TABLE_NAME, $this->entity_class);
     }
 
-    public function deleteQuery(): DeleteQueryBuilder
+    public function deleteQuery(): DeleteQueryBuilderInterface
     {
         if (!$this->assertReadyForQuery()){
             throw new Exception('Cannot create query without database connection');
