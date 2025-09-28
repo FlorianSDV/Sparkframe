@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Sparkframe\Database\QueryBuilder;
+namespace Sparkframe\Database\QueryBuilder\Traits;
 
 use Exception;
 use Sparkframe\Entity\Entity;
