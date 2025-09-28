@@ -2,15 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Sparkframe\Database\QueryBuilder\SQLite;
+namespace Sparkframe\Database\QueryBuilder\MySQL;
 
 use Exception;
 use PDO;
+use ReflectionProperty;
 use Sparkframe\Database\QueryBuilder\Builders\InsertQueryBuilderInterface;
 use Sparkframe\Database\QueryBuilder\Traits\QueryBuilderTrait;
 use Sparkframe\Database\QueryBuilder\Traits\QueryWithEntitiesTrait;
 
-class SQLiteInsertQueryBuilder implements InsertQueryBuilderInterface
+class MySQLInsertQueryBuilder implements InsertQueryBuilderInterface
 {
     use QueryBuilderTrait;
     use QueryWithEntitiesTrait;
@@ -49,7 +50,7 @@ class SQLiteInsertQueryBuilder implements InsertQueryBuilderInterface
         $sql = $this->getQuery($columns);
 
         $primary_key_data_type = $this->entity_class::getPrimaryKeyDataType();
-
+        
         try {
             $pdo = $this->PDO;
             $pdo->beginTransaction();
@@ -71,7 +72,7 @@ class SQLiteInsertQueryBuilder implements InsertQueryBuilderInterface
         $this->cleanUp();
     }
 
-	private function converIdToDataType($id, string $data_type): strin|int
+    private function converIdToDataType($id, string $data_type): string|int
     {
         switch ($data_type) {
             case 'int':
