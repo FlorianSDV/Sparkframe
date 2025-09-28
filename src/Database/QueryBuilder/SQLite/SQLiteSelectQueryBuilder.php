@@ -5,16 +5,16 @@ namespace Sparkframe\Database\QueryBuilder\SQLite;
 use Exception;
 use PDO;
 use Sparkframe\Database\QueryBuilder\SelectQueryBuilder;
-use Sparkframe\Entity\Entity;
+use Sparkframe\Database\QueryBuilder\QueryBuilderTrait;
 
-class SQLiteSelectQueryBuilder extends SQLiteQueryBuilder implements SelectQueryBuilder
+class SQLiteSelectQueryBuilder implements SelectQueryBuilder
 {
+    use QueryBuilderTrait;
     protected array $select_columns = ['*'];
     protected int|null $limit_amount = null;
     protected array $where_conditions = [];
 
-    /** @var class-string<Entity> */
-    protected string $entity_class;
+    public function __construct(protected PDO $PDO, protected string $target_table_name, protected string $entity_class) { }
 
     public function select(string ...$column_names): SQLiteSelectQueryBuilder
     {
@@ -165,7 +165,7 @@ class SQLiteSelectQueryBuilder extends SQLiteQueryBuilder implements SelectQuery
         return " limit $this->limit_amount";
     }
 
-    protected function cleanUp(): void
+    public function cleanUp(): void
     {
         $this->select_columns = ['*'];
         $this->clearWhere();

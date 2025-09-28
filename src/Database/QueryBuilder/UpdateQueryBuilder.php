@@ -2,6 +2,6 @@
 
 namespace Sparkframe\Database\QueryBuilder;
 
-interface UpdateQueryBuilder extends QueryWithEntities
+interface UpdateQueryBuilder extends QueryBuilder, QueryWithEntities
 {
 }

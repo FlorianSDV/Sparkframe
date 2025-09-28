@@ -9,9 +9,9 @@ interface QueryWithEntities
     /**
      * Adds an entity that will be inserted once the query is executed.
      * @param Entity $entity
-     * @return self
+     * @return InsertQueryBuilder | UpdateQueryBuilder | DeleteQueryBuilder
      */
-    function addEntity(Entity $entity): self;
+    function addEntity(Entity $entity): InsertQueryBuilder | UpdateQueryBuilder | DeleteQueryBuilder;
 
-    function clearEntities(): self;
+    function clearEntities(): InsertQueryBuilder | UpdateQueryBuilder | DeleteQueryBuilder;
 }

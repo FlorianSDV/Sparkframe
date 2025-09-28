@@ -3,16 +3,18 @@
 namespace Sparkframe\Database\QueryBuilder\SQLite;
 
 use Exception;
+use PDO;
+use Sparkframe\Database\QueryBuilder\QueryBuilderTrait;
 use Sparkframe\Database\QueryBuilder\QueryWithEntitiesTrait;
 use Sparkframe\Database\QueryBuilder\UpdateQueryBuilder;
-use Sparkframe\Entity\Entity;
 
-class SQLiteUpdateQueryBuilder extends SQLiteQueryBuilder implements UpdateQueryBuilder
+class SQLiteUpdateQueryBuilder implements UpdateQueryBuilder
 {
+    use QueryBuilderTrait;
     use QueryWithEntitiesTrait;
 
-    /** @var class-string<Entity> */
-    protected string $entity_class;
+    public function __construct(protected PDO $PDO, protected string $target_table_name, protected string $entity_class) { }
+
 
     /**
      * @throws Exception
@@ -75,7 +77,7 @@ class SQLiteUpdateQueryBuilder extends SQLiteQueryBuilder implements UpdateQuery
         return "update $this->target_table_name set $set_part $where_part";
     }
     
-    protected function cleanUp(): void
+    public function cleanUp(): void
     {
         $this->clearEntities();
     }

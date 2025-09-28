@@ -5,15 +5,17 @@ declare(strict_types=1);
 namespace Sparkframe\Database\QueryBuilder\SQLite;
 
 use Exception;
+use PDO;
 use Sparkframe\Database\QueryBuilder\DeleteQueryBuilder;
+use Sparkframe\Database\QueryBuilder\QueryBuilderTrait;
 use Sparkframe\Database\QueryBuilder\QueryWithEntitiesTrait;
 
-class SQLiteDeleteQueryBuilder extends SQLiteQueryBuilder implements DeleteQueryBuilder
+class SQLiteDeleteQueryBuilder implements DeleteQueryBuilder
 {
+    use QueryBuilderTrait;
     use QueryWithEntitiesTrait;
 
-    /** @var class-string<Entity> */
-    protected string $entity_class;
+    public function __construct(protected PDO $PDO, protected string $target_table_name, protected string $entity_class) { }
     
     public function execute()
     {
@@ -46,7 +48,7 @@ class SQLiteDeleteQueryBuilder extends SQLiteQueryBuilder implements DeleteQuery
     }
 
 
-    protected function cleanUp(): void
+    public function cleanUp(): void
     {
         $this->clearEntities();
     }
