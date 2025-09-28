@@ -21,6 +21,8 @@ class DatabaseWrapperFactory
         switch ($pdo::class) {
             case Pdo\Sqlite::class:
                 return new SqliteDatabaseWrapper($pdo);
+            case Pdo\Mysql::class:
+                return new MySQLDatabaseWrapper($pdo);
             default:
                 throw new Exception('Db type not allowed');
         }
