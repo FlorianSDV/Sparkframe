@@ -8,9 +8,9 @@ use Exception;
 use PDO;
 use Sparkframe\Database\QueryBuilder\Traits\QueryBuilderTrait;
 use Sparkframe\Database\QueryBuilder\Traits\QueryWithEntitiesTrait;
-use Sparkframe\Database\QueryBuilder\Builders\UpdateQueryBuilder;
+use Sparkframe\Database\QueryBuilder\Builders\UpdateQueryBuilderInterface;
 
-class SQLiteUpdateQueryBuilder implements UpdateQueryBuilder
+class SQLiteUpdateQueryBuilder implements UpdateQueryBuilderInterface
 {
     use QueryBuilderTrait;
     use QueryWithEntitiesTrait;

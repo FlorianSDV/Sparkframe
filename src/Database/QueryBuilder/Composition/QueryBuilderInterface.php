@@ -6,7 +6,7 @@ namespace Sparkframe\Database\QueryBuilder\Composition;
 
 use PDO;
 
-interface QueryBuilder
+interface QueryBuilderInterface
 {
     public function __construct(PDO $PDO, string $target_table_name, string $entity_class);
 
