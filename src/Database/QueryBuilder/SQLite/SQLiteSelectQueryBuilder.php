@@ -12,14 +12,9 @@ class SQLiteSelectQueryBuilder extends SQLiteQueryBuilder implements SelectQuery
     use SQLiteWhereQueryTrait;
     protected array $select_columns = ['*'];
     protected int|null $limit_amount = null;
+
     /** @var class-string<Entity> */
     protected string $entity_class;
-
-    public function __construct(PDO $PDO, string $target_table_name, string $entity_class)
-    {
-        $this->entity_class = $entity_class;
-        parent::__construct($PDO, $target_table_name);
-    }
 
     public function select(string ...$column_names): SQLiteSelectQueryBuilder
     {

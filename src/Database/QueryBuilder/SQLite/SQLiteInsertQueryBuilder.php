@@ -3,7 +3,6 @@
 namespace Sparkframe\Database\QueryBuilder\SQLite;
 
 use Exception;
-use PDO;
 use Sparkframe\Database\QueryBuilder\InsertQueryBuilder;
 use Sparkframe\Database\QueryBuilder\QueryWithEntitiesTrait;
 use Sparkframe\Entity\Entity;
@@ -14,12 +13,6 @@ class SQLiteInsertQueryBuilder extends SQLiteQueryBuilder implements InsertQuery
 
     /** @var class-string<Entity> */
     protected string $entity_class;
-
-    public function __construct(PDO $PDO, string $target_table_name, string $entity_class)
-    {
-        $this->entity_class = $entity_class;
-        parent::__construct($PDO, $target_table_name);
-    }
 
     /**
      * Generates the SQL query string for inserting a single entity into the target table.

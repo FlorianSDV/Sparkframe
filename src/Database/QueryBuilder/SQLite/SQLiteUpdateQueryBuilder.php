@@ -16,12 +16,6 @@ class SQLiteUpdateQueryBuilder extends SQLiteQueryBuilder implements UpdateQuery
     /** @var class-string<Entity> */
     protected string $entity_class;
 
-    public function __construct(PDO $PDO, string $target_table_name, string $entity_class)
-    {
-        $this->entity_class = $entity_class;
-        parent::__construct($PDO, $target_table_name);
-    }
-
     /**
      * @throws Exception
      */
