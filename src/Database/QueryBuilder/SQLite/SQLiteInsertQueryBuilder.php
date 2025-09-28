@@ -59,7 +59,7 @@ class SQLiteInsertQueryBuilder implements InsertQueryBuilderInterface
                 $values = $entity->getValuesArray();
                 $stmt->execute($values);
                 $last_insert_id = $pdo->lastInsertId();
-                $last_insert_id = $this->converIdToDataType($last_insert_id, $primary_key_data_type);
+                $last_insert_id = $this->convertIdToDataType($last_insert_id, $primary_key_data_type);
                 $entity->setId($last_insert_id);
             }
             $pdo->commit();
@@ -71,7 +71,7 @@ class SQLiteInsertQueryBuilder implements InsertQueryBuilderInterface
         $this->cleanUp();
     }
 
-	private function converIdToDataType($id, string $data_type): strin|int
+	private function convertIdToDataType($id, string $data_type): string|int
     {
         switch ($data_type) {
             case 'int':
