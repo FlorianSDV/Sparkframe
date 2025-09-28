@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Sparkframe\Database\QueryBuilder;
+namespace Sparkframe\Database\QueryBuilder\Builders;
+
+use Sparkframe\Database\QueryBuilder\Composition\QueryBuilder;
 
 interface SelectQueryBuilder extends QueryBuilder
 {

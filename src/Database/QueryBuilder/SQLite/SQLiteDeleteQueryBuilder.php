@@ -6,9 +6,9 @@ namespace Sparkframe\Database\QueryBuilder\SQLite;
 
 use Exception;
 use PDO;
-use Sparkframe\Database\QueryBuilder\DeleteQueryBuilder;
-use Sparkframe\Database\QueryBuilder\QueryBuilderTrait;
-use Sparkframe\Database\QueryBuilder\QueryWithEntitiesTrait;
+use Sparkframe\Database\QueryBuilder\Builders\DeleteQueryBuilder;
+use Sparkframe\Database\QueryBuilder\Traits\QueryBuilderTrait;
+use Sparkframe\Database\QueryBuilder\Traits\QueryWithEntitiesTrait;
 
 class SQLiteDeleteQueryBuilder implements DeleteQueryBuilder
 {
