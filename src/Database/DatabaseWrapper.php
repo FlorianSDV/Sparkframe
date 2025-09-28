@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Sparkframe\Database;
 
 use PDO;
-use Sparkframe\Database\QueryBuilder\DeleteQueryBuilder;
-use Sparkframe\Database\QueryBuilder\SelectQueryBuilder;
-use Sparkframe\Database\QueryBuilder\InsertQueryBuilder;
-use Sparkframe\Database\QueryBuilder\UpdateQueryBuilder;
+use Sparkframe\Database\QueryBuilder\Builders\DeleteQueryBuilder;
+use Sparkframe\Database\QueryBuilder\Builders\SelectQueryBuilder;
+use Sparkframe\Database\QueryBuilder\Builders\InsertQueryBuilder;
+use Sparkframe\Database\QueryBuilder\Builders\UpdateQueryBuilder;
 
 /**
  * Interface DatabaseWrapper

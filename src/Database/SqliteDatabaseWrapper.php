@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Sparkframe\Database;
 
 use Pdo\Sqlite;
-use Sparkframe\Database\QueryBuilder\DeleteQueryBuilder;
+use Sparkframe\Database\QueryBuilder\Builders\DeleteQueryBuilder;
 use Sparkframe\Database\QueryBuilder\SQLite\SQLiteSelectQueryBuilder;
 use Sparkframe\Database\QueryBuilder\SQLite\SQLiteInsertQueryBuilder;
 use Sparkframe\Database\QueryBuilder\SQLite\SQLiteUpdateQueryBuilder;
 use Sparkframe\Database\QueryBuilder\SQLite\SQLiteDeleteQueryBuilder;
-use Sparkframe\Database\QueryBuilder\UpdateQueryBuilder;
+use Sparkframe\Database\QueryBuilder\Builders\UpdateQueryBuilder;
 
 readonly class SqliteDatabaseWrapper implements DatabaseWrapper
 {

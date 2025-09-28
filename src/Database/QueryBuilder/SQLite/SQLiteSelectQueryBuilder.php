@@ -6,8 +6,8 @@ namespace Sparkframe\Database\QueryBuilder\SQLite;
 
 use Exception;
 use PDO;
-use Sparkframe\Database\QueryBuilder\SelectQueryBuilder;
-use Sparkframe\Database\QueryBuilder\QueryBuilderTrait;
+use Sparkframe\Database\QueryBuilder\Builders\SelectQueryBuilder;
+use Sparkframe\Database\QueryBuilder\Traits\QueryBuilderTrait;
 
 class SQLiteSelectQueryBuilder implements SelectQueryBuilder
 {

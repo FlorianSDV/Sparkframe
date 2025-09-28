@@ -2,9 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Sparkframe\Database\QueryBuilder;
+namespace Sparkframe\Database\QueryBuilder\Composition;
 
 use Sparkframe\Entity\Entity;
+use Sparkframe\Database\QueryBuilder\Builders\InsertQueryBuilder;
+use Sparkframe\Database\QueryBuilder\Builders\UpdateQueryBuilder;
+use Sparkframe\Database\QueryBuilder\Builders\DeleteQueryBuilder;
 
 interface QueryWithEntities
 {
