@@ -10,7 +10,7 @@ use Sparkframe\Database\QueryBuilder\SQLite\SQLiteInsertQueryBuilder;
 use Sparkframe\Database\QueryBuilder\SQLite\SQLiteUpdateQueryBuilder;
 use Sparkframe\Database\QueryBuilder\SQLite\SQLiteDeleteQueryBuilder;
 
-readonly class SqliteDatabaseWrapper implements DatabaseWrapper
+readonly class SqliteDatabaseWrapper implements DatabaseWrapperInterface
 {
     public function __construct(protected Sqlite $PDO) {}
 

@@ -6,10 +6,10 @@ namespace Sparkframe\Database\QueryBuilder\SQLite;
 
 use Exception;
 use PDO;
-use Sparkframe\Database\QueryBuilder\Builders\SelectQueryBuilder;
+use Sparkframe\Database\QueryBuilder\Builders\SelectQueryBuilderInterface;
 use Sparkframe\Database\QueryBuilder\Traits\QueryBuilderTrait;
 
-class SQLiteSelectQueryBuilder implements SelectQueryBuilder
+class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
 {
     use QueryBuilderTrait;
     protected array $select_columns = ['*'];

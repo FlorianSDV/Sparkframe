@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Sparkframe\Database\QueryBuilder\Builders;
 
-use Sparkframe\Database\QueryBuilder\Composition\QueryBuilder;
+use Sparkframe\Database\QueryBuilder\Composition\QueryBuilderInterface;
 
-interface SelectQueryBuilder extends QueryBuilder
+interface SelectQueryBuilderInterface extends QueryBuilderInterface
 {
     /**
      * @param string ...$column_names any number of column names

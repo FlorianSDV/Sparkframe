@@ -6,11 +6,11 @@ namespace Sparkframe\Database\QueryBuilder\SQLite;
 
 use Exception;
 use PDO;
-use Sparkframe\Database\QueryBuilder\Builders\InsertQueryBuilder;
+use Sparkframe\Database\QueryBuilder\Builders\InsertQueryBuilderInterface;
 use Sparkframe\Database\QueryBuilder\Traits\QueryBuilderTrait;
 use Sparkframe\Database\QueryBuilder\Traits\QueryWithEntitiesTrait;
 
-class SQLiteInsertQueryBuilder implements InsertQueryBuilder
+class SQLiteInsertQueryBuilder implements InsertQueryBuilderInterface
 {
     use QueryBuilderTrait;
     use QueryWithEntitiesTrait;
