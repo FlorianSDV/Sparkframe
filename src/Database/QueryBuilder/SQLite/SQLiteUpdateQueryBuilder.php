@@ -3,14 +3,12 @@
 namespace Sparkframe\Database\QueryBuilder\SQLite;
 
 use Exception;
-use PDO;
 use Sparkframe\Database\QueryBuilder\QueryWithEntitiesTrait;
 use Sparkframe\Database\QueryBuilder\UpdateQueryBuilder;
 use Sparkframe\Entity\Entity;
 
 class SQLiteUpdateQueryBuilder extends SQLiteQueryBuilder implements UpdateQueryBuilder
 {
-    use SQLiteWhereQueryTrait;
     use QueryWithEntitiesTrait;
 
     /** @var class-string<Entity> */
@@ -43,7 +41,6 @@ class SQLiteUpdateQueryBuilder extends SQLiteQueryBuilder implements UpdateQuery
                 $final_array = array_merge($update_values, $where);
 
                 $stmt->execute($final_array);
-                $this->clearWhere();
             }
             $pdo->commit();
 
@@ -73,9 +70,7 @@ class SQLiteUpdateQueryBuilder extends SQLiteQueryBuilder implements UpdateQuery
             $set_part .= ', ';
         }
 
-        // We don't know what the value of the primary key will be, so it can be left empty.
-        $this->where([$primary_key_column_name => '']);
-        $where_part = $this->getPreparedWherePart();
+        $where_part = "where $primary_key_column_name = :$primary_key_column_name";
 
         return "update $this->target_table_name set $set_part $where_part";
     }
@@ -83,6 +78,5 @@ class SQLiteUpdateQueryBuilder extends SQLiteQueryBuilder implements UpdateQuery
     protected function cleanUp(): void
     {
         $this->clearEntities();
-        $this->clearWhere();
     }
 }
