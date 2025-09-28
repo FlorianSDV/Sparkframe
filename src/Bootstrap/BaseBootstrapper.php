@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Sparkframe\Bootstrap;
 
 require __DIR__ . '/../Tools/Constants.php';

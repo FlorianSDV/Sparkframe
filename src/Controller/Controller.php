@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Sparkframe\Controller;
 
 use Sparkframe\Attributes\Route;
