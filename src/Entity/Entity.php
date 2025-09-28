@@ -71,4 +71,19 @@ abstract class Entity
         }
         return $values;
     }
+
+
+    public static function getPrimaryKeyDataType(): string {
+        return static::getColumnDataType(static::getPrimaryKeyColumnName());
+    }
+
+    public static function getColumnDataType(string $column): string
+    {
+        $column_descriptions = static::getColumnDescriptions();
+        $column_description = $column_descriptions[$column];
+        if (is_array($column_description)) {
+            return $column_description[0];
+        }
+        return $column_description;
+    }
 }

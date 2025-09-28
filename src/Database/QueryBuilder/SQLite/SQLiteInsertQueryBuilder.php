@@ -48,6 +48,8 @@ class SQLiteInsertQueryBuilder implements InsertQueryBuilderInterface
 
         $sql = $this->getQuery($columns);
 
+        $primary_key_data_type = $this->entity_class::getPrimaryKeyDataType();
+
         try {
             $pdo = $this->PDO;
             $pdo->beginTransaction();
@@ -56,7 +58,9 @@ class SQLiteInsertQueryBuilder implements InsertQueryBuilderInterface
             foreach ($this->entities as $entity) {
                 $values = $entity->getValuesArray();
                 $stmt->execute($values);
-                $entity->setId($pdo->lastInsertId());
+                $last_insert_id = $pdo->lastInsertId();
+                $last_insert_id = $this->converIdToDataType($last_insert_id, $primary_key_data_type);
+                $entity->setId($last_insert_id);
             }
             $pdo->commit();
         } catch (Exception $e) {
@@ -65,6 +69,18 @@ class SQLiteInsertQueryBuilder implements InsertQueryBuilderInterface
         }
 
         $this->cleanUp();
+    }
+
+	private function converIdToDataType($id, string $data_type): strin|int
+    {
+        switch ($data_type) {
+            case 'int':
+                return (int) $id;
+            case 'string':
+                return (string) $id;
+        }
+
+        return $id;
     }
 
     public function cleanUp(): void

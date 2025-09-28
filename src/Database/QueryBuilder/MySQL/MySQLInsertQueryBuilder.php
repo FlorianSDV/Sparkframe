@@ -6,6 +6,7 @@ namespace Sparkframe\Database\QueryBuilder\MySQL;
 
 use Exception;
 use PDO;
+use ReflectionProperty;
 use Sparkframe\Database\QueryBuilder\Builders\InsertQueryBuilderInterface;
 use Sparkframe\Database\QueryBuilder\Traits\QueryBuilderTrait;
 use Sparkframe\Database\QueryBuilder\Traits\QueryWithEntitiesTrait;
@@ -48,6 +49,8 @@ class MySQLInsertQueryBuilder implements InsertQueryBuilderInterface
 
         $sql = $this->getQuery($columns);
 
+        $primary_key_data_type = $this->entity_class::getPrimaryKeyDataType();
+        
         try {
             $pdo = $this->PDO;
             $pdo->beginTransaction();
@@ -56,7 +59,9 @@ class MySQLInsertQueryBuilder implements InsertQueryBuilderInterface
             foreach ($this->entities as $entity) {
                 $values = $entity->getValuesArray();
                 $stmt->execute($values);
-                $entity->setId($pdo->lastInsertId());
+                $last_insert_id = $pdo->lastInsertId();
+                $last_insert_id = $this->converIdToDataType($last_insert_id, $primary_key_data_type);
+                $entity->setId($last_insert_id);
             }
             $pdo->commit();
         } catch (Exception $e) {
@@ -65,6 +70,18 @@ class MySQLInsertQueryBuilder implements InsertQueryBuilderInterface
         }
 
         $this->cleanUp();
+    }
+
+    private function converIdToDataType($id, string $data_type): string|int
+    {
+        switch ($data_type) {
+            case 'int':
+                return (int) $id;
+            case 'string':
+                return (string) $id;
+        }
+
+        return $id;
     }
 
     public function cleanUp(): void
