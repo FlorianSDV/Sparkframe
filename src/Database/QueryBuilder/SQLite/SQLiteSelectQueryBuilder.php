@@ -47,7 +47,7 @@ class SQLiteSelectQueryBuilder extends SQLiteQueryBuilder implements SelectQuery
         return $this;
     }
 
-    public function getPreparedWherePart(): string
+    protected function getPreparedWherePart(): string
     {
         if (count($this->where_conditions) == 0) {
             return '';
@@ -67,7 +67,7 @@ class SQLiteSelectQueryBuilder extends SQLiteQueryBuilder implements SelectQuery
         return $where_part;
     }
 
-    public function getPreparedWherePartStatements(): array
+    protected function getPreparedWherePartStatements(): array
     {
         if (count($this->where_conditions) == 0) {
             return [];

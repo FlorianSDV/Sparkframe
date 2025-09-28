@@ -21,14 +21,4 @@ interface SelectQueryBuilder
      * @return self
      */
     public function where(array $filter_criteria): self;
-
-    /**
-     * @return string
-     */
-    public function getPreparedWherePart(): string;
-
-    /**
-     * @return array
-     */
-    public function getPreparedWherePartStatements(): array;
 }
