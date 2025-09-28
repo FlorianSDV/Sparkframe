@@ -2,7 +2,7 @@
 
 namespace Sparkframe\Database\QueryBuilder;
 
-interface DeleteQueryBuilder extends QueryWithEntities
+interface DeleteQueryBuilder extends QueryBuilder, QueryWithEntities
 {
 
 }

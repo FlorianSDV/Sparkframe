@@ -5,21 +5,16 @@ namespace Sparkframe\Database\QueryBuilder\SQLite;
 use Exception;
 use PDO;
 use Sparkframe\Database\QueryBuilder\SelectQueryBuilder;
-use Sparkframe\Entity\Entity;
+use Sparkframe\Database\QueryBuilder\QueryBuilderTrait;
 
-class SQLiteSelectQueryBuilder extends SQLiteQueryBuilder implements SelectQueryBuilder
+class SQLiteSelectQueryBuilder implements SelectQueryBuilder
 {
-    use SQLiteWhereQueryTrait;
+    use QueryBuilderTrait;
     protected array $select_columns = ['*'];
     protected int|null $limit_amount = null;
-    /** @var class-string<Entity> */
-    protected string $entity_class;
+    protected array $where_conditions = [];
 
-    public function __construct(PDO $PDO, string $target_table_name, string $entity_class)
-    {
-        $this->entity_class = $entity_class;
-        parent::__construct($PDO, $target_table_name);
-    }
+    public function __construct(protected PDO $PDO, protected string $target_table_name, protected string $entity_class) { }
 
     public function select(string ...$column_names): SQLiteSelectQueryBuilder
     {
@@ -32,6 +27,63 @@ class SQLiteSelectQueryBuilder extends SQLiteQueryBuilder implements SelectQuery
         }
 
         return $this;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function where(array $filter_criteria): self
+    {
+        foreach ($filter_criteria as $column => $filter_criterion) {
+            if (!is_string($column)) {
+                throw new Exception('Column name must be a string!');
+            }
+            $this->where_conditions[] = [
+                'column' => $column,
+                'filter_criterion' => $filter_criterion
+            ];
+        }
+
+        return $this;
+    }
+
+    protected function getPreparedWherePart(): string
+    {
+        if (count($this->where_conditions) == 0) {
+            return '';
+        }
+
+        $where_part = 'where';
+        foreach ($this->where_conditions as $key => $where_condition) {
+            $where_part .= " $where_condition[column] = :$where_condition[column]";
+
+            if (array_key_last($this->where_conditions) == $key) {
+                break;
+            }
+
+            $where_part .= ' and';
+        }
+
+        return $where_part;
+    }
+
+    protected function getPreparedWherePartStatements(): array
+    {
+        if (count($this->where_conditions) == 0) {
+            return [];
+        }
+
+        $prepared_statements = [];
+        foreach ($this->where_conditions as $where_condition) {
+            $prepared_statements[$where_condition['column']] = $where_condition['filter_criterion'];
+        }
+
+        return $prepared_statements;
+    }
+
+    public function clearWhere(): void
+    {
+        $this->where_conditions = [];
     }
 
     /**
@@ -72,6 +124,10 @@ class SQLiteSelectQueryBuilder extends SQLiteQueryBuilder implements SelectQuery
      */
     function execute(): array
     {
+        if (empty($this->entity_class)) {
+            throw new Exception("Tried to execute select query without Entity class being set.");
+        }
+
         $query_string = $this->getQuery();
         $query = $this->PDO
             ->prepare($query_string);
@@ -109,7 +165,7 @@ class SQLiteSelectQueryBuilder extends SQLiteQueryBuilder implements SelectQuery
         return " limit $this->limit_amount";
     }
 
-    protected function cleanUp(): void
+    public function cleanUp(): void
     {
         $this->select_columns = ['*'];
         $this->clearWhere();
