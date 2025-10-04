@@ -15,6 +15,7 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
     protected array $select_columns = ['*'];
     protected int|null $limit_amount = null;
     protected array $where_conditions = [];
+    protected int $prepared_statement_index = 0;
 
     public function __construct(protected PDO $PDO, protected string $target_table_name, protected string $entity_class) { }
 
@@ -46,6 +47,11 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
             ];
         }
 
+        return $this;
+    }
+
+    public function whereNotIn(string $column_name, SelectQueryBuilderInterface|array $values): self
+    {
         return $this;
     }
 
@@ -165,6 +171,17 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
         }
 
         return " limit $this->limit_amount";
+    }
+    
+    public function setPreparedStatementIndex(int $prepared_statement_index): SQLiteSelectQueryBuilder
+    {
+        $this->prepared_statement_index = $prepared_statement_index;
+        return $this;
+    }
+
+    public function getPreparedStatementIndex(): int
+    {
+        return $this->prepared_statement_index;
     }
 
     public function cleanUp(): void

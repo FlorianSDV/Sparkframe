@@ -15,6 +15,8 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
     protected array $select_columns = ['*'];
     protected int|null $limit_amount = null;
     protected array $where_conditions = [];
+    protected array $where_not_in_conditions = [];
+    protected int $prepared_statement_index = 0;
 
     public function __construct(protected PDO $PDO, protected string $target_table_name, protected string $entity_class) { }
 
@@ -42,42 +44,69 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
             }
             $this->where_conditions[] = [
                 'column' => $column,
-                'filter_criterion' => $filter_criterion
+                'filter_criterion' => $filter_criterion,
+                'prepared_statement_index' => $this->prepared_statement_index
             ];
+            $this->prepared_statement_index++;
         }
 
         return $this;
     }
 
-    protected function getPreparedWherePart(): string
+    public function whereNotIn(string $column_name, SelectQueryBuilderInterface|array $values): self
     {
-        if (count($this->where_conditions) == 0) {
+        $this->where_not_in_conditions[] = [
+            'column' => $column_name,
+            'values' => $values,
+            'prepared_statement_index' => $this->prepared_statement_index
+        ];
+        $this->prepared_statement_index++;
+
+        return $this;
+    }
+
+    public function getPreparedWherePart(): string
+    {
+        if (count($this->where_conditions) == 0 && count($this->where_not_in_conditions) == 0) {
             return '';
         }
 
-        $where_part = 'where';
-        foreach ($this->where_conditions as $key => $where_condition) {
-            $where_part .= " $where_condition[column] = :$where_condition[column]";
-
-            if (array_key_last($this->where_conditions) == $key) {
-                break;
-            }
-
-            $where_part .= ' and';
+        $where_array = [];
+        $where_part = 'where ';
+        foreach ($this->where_conditions as $where_condition) {
+            $where_array[] = $where_condition['column'] . ' = :' . $where_condition['prepared_statement_index'];
         }
+        foreach ($this->where_not_in_conditions as $where_not_in_condition) {
+            if ($where_not_in_condition['values'] instanceof MySQLSelectQueryBuilder) {
+                $where_array[] = $where_not_in_condition['column'] . ' not in (' . $where_not_in_condition['values']->getQuery() . ')';
+            } else {
+                $where_array[] = $where_not_in_condition['column'] . ' not in (:' . $where_not_in_condition['prepared_statement_index'] . ')';
+            }
+        }
+        $where_part .= implode(' and ', $where_array);
 
         return $where_part;
     }
 
-    protected function getPreparedWherePartStatements(): array
+    public function getPreparedWherePartStatements(): array
     {
-        if (count($this->where_conditions) == 0) {
+        if (count($this->where_conditions) == 0 && count($this->where_not_in_conditions) == 0) {
             return [];
         }
 
         $prepared_statements = [];
         foreach ($this->where_conditions as $where_condition) {
-            $prepared_statements[$where_condition['column']] = $where_condition['filter_criterion'];
+            $parameter_name = ':' . $where_condition['prepared_statement_index'];
+            $prepared_statements[$parameter_name] = $where_condition['filter_criterion'];
+        }
+
+        foreach ($this->where_not_in_conditions as $where_not_in_condition) {
+            if ($where_not_in_condition['values'] instanceof MySQLSelectQueryBuilder) {
+                $prepared_statements = array_merge($prepared_statements, $where_not_in_condition['values']->getPreparedWherePartStatements());
+            } else {
+                $parameter_name = ':' . $where_not_in_condition['prepared_statement_index'];
+                $prepared_statements[$parameter_name] = $where_not_in_condition['values'];
+            }
         }
 
         return $prepared_statements;
@@ -86,6 +115,7 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
     public function clearWhere(): void
     {
         $this->where_conditions = [];
+        $this->where_not_in_conditions = [];
     }
 
     /**
@@ -108,17 +138,7 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
      */
     public function getSelectPart(): string
     {
-        $select_string = 'select';
-        foreach ($this->select_columns as $key => $select_column) {
-            $select_string .= " $select_column";
-
-            if (array_key_last($this->select_columns) == $key){
-                break;
-            }
-            $select_string .= ', ';
-        }
-
-        return $select_string . ' ';
+        return 'select ' . implode(', ', $this->select_columns) . ' ';
     }
 
     /**
@@ -133,7 +153,8 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         $query_string = $this->getQuery();
         $query = $this->PDO
             ->prepare($query_string);
-        $query->execute($this->getPreparedWherePartStatements());
+        $prepared_statements = $this->getPreparedWherePartStatements();
+        $query->execute($prepared_statements);
         $result = $query->fetchAll(PDO::FETCH_ASSOC);
 
         $hydrated_result = [];
@@ -164,10 +185,22 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
 
         return " limit $this->limit_amount";
     }
+    
+    public function setPreparedStatementIndex(int $prepared_statement_index): MySQLSelectQueryBuilder
+    {
+        $this->prepared_statement_index = $prepared_statement_index;
+        return $this;
+    }
+
+    public function getPreparedStatementIndex(): int
+    {
+        return $this->prepared_statement_index;
+    }
 
     public function cleanUp(): void
     {
         $this->select_columns = ['*'];
         $this->clearWhere();
+        $this->prepared_statement_index = 0;
     }
 }
