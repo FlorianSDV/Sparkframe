@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Sparkframe\Bootstrap;
 
 require __DIR__ . '/../Tools/Constants.php';
+require __DIR__ . '/../Functions/ViewFunctions.php';
 
 use Exception;
 use Sparkframe\Database\BaseDatabaseInfoCollection;
