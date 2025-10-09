@@ -44,10 +44,8 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
             }
             $this->where_conditions[] = [
                 'column' => $column,
-                'filter_criterion' => $filter_criterion,
-                'prepared_statement_index' => $this->prepared_statement_index
+                'filter_criterion' => $filter_criterion
             ];
-            $this->prepared_statement_index++;
         }
 
         return $this;
@@ -55,12 +53,20 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
 
     public function whereNotIn(string $column_name, SelectQueryBuilderInterface|array $values): self
     {
-        $this->where_not_in_conditions[] = [
-            'column' => $column_name,
-            'values' => $values,
-            'prepared_statement_index' => $this->prepared_statement_index
-        ];
-        $this->prepared_statement_index++;
+        if (is_array($values)) {
+            $values = array_map(fn($value) => ['value' => $value], $values);
+            $this->where_not_in_conditions[] = [
+                'column' => $column_name,
+                'values' => $values
+            ];
+        }
+
+        if ($values instanceof MySQLSelectQueryBuilder) {
+            $this->where_not_in_conditions[] = [
+                'column' => $column_name,
+                'values' => $values
+            ];
+        }
 
         return $this;
     }
@@ -73,14 +79,25 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
 
         $where_array = [];
         $where_part = 'where ';
-        foreach ($this->where_conditions as $where_condition) {
-            $where_array[] = $where_condition['column'] . ' = :' . $where_condition['prepared_statement_index'];
+        foreach ($this->where_conditions as &$where_condition) {
+            $where_array[] = $where_condition['column'] . ' = :' . $this->prepared_statement_index;
+            $where_condition['prepared_statement_index'] = $this->prepared_statement_index;
+            $this->prepared_statement_index++;
         }
-        foreach ($this->where_not_in_conditions as $where_not_in_condition) {
+
+        foreach ($this->where_not_in_conditions as &$where_not_in_condition) {
             if ($where_not_in_condition['values'] instanceof MySQLSelectQueryBuilder) {
+                $where_not_in_condition['values']->setPreparedStatementIndex($this->prepared_statement_index);
                 $where_array[] = $where_not_in_condition['column'] . ' not in (' . $where_not_in_condition['values']->getQuery() . ')';
+                $this->prepared_statement_index = $where_not_in_condition['values']->getPreparedStatementIndex();
             } else {
-                $where_array[] = $where_not_in_condition['column'] . ' not in (:' . $where_not_in_condition['prepared_statement_index'] . ')';
+                $indexes = [];
+                foreach ($where_not_in_condition['values'] as &$value) {
+                    $value['prepared_statement_index'] = $this->prepared_statement_index;
+                    $indexes[] = $this->prepared_statement_index;
+                    $this->prepared_statement_index++;
+                }
+                $where_array[] = $where_not_in_condition['column'] . ' not in (:' . implode(', :', $indexes) . ')';
             }
         }
         $where_part .= implode(' and ', $where_array);
@@ -104,8 +121,10 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
             if ($where_not_in_condition['values'] instanceof MySQLSelectQueryBuilder) {
                 $prepared_statements = array_merge($prepared_statements, $where_not_in_condition['values']->getPreparedWherePartStatements());
             } else {
-                $parameter_name = ':' . $where_not_in_condition['prepared_statement_index'];
-                $prepared_statements[$parameter_name] = $where_not_in_condition['values'];
+                foreach ($where_not_in_condition['values'] as &$value) {
+                    $parameter_name = ':' . $value['prepared_statement_index'];
+                    $prepared_statements[$parameter_name] = $value['value'];
+                }
             }
         }
 
