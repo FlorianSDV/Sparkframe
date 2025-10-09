@@ -16,6 +16,7 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
     protected int|null $limit_amount = null;
     protected array $where_conditions = [];
     protected array $where_not_in_conditions = [];
+    protected array $or_conditions = [];
     protected int $prepared_statement_index = 0;
 
     public function __construct(protected PDO $PDO, protected string $target_table_name, protected string $entity_class) { }
@@ -43,6 +44,24 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
                 throw new Exception('Column name must be a string!');
             }
             $this->where_conditions[] = [
+                'column' => $column,
+                'filter_criterion' => $filter_criterion
+            ];
+        }
+
+        return $this;
+    }
+
+    public function or(array $filter_criteria): self
+    {
+        if (count($this->where_conditions) == 0) {
+            throw new Exception('Cannot use or without where conditions!');
+        }
+        foreach ($filter_criteria as $column => $filter_criterion) {
+            if (!is_string($column)) {
+                throw new Exception('Column name must be a string!');
+            }
+            $this->or_conditions[] = [
                 'column' => $column,
                 'filter_criterion' => $filter_criterion
             ];
@@ -131,10 +150,47 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         return $prepared_statements;
     }
 
+    public function getPreparedOrPart(): string
+    {
+        $empty_where_part = count($this->where_conditions) == 0 && count($this->where_not_in_conditions) == 0;
+        $empty_or_part = count($this->or_conditions) == 0;
+        if ($empty_where_part || $empty_or_part) {
+            return '';
+        }
+
+        $or_array = [];
+        $or_part = 'or ';
+        foreach ($this->or_conditions as &$or_condition) {
+            $or_array[] = $or_condition['column'] . ' = :' . $this->prepared_statement_index;
+            $or_condition['prepared_statement_index'] = $this->prepared_statement_index;
+            $this->prepared_statement_index++;
+        }
+        $or_part .= implode(' and ', $or_array);
+        return $or_part;
+    }
+
+    public function getPreparedOrPartStatements(): array
+    {
+        if (count($this->or_conditions) == 0) {
+            return [];
+        }
+        $prepared_statements = [];
+        foreach ($this->or_conditions as $or_condition) {
+            $parameter_name = ':' . $or_condition['prepared_statement_index'];
+            $prepared_statements[$parameter_name] = $or_condition['filter_criterion'];
+        }
+        return $prepared_statements;
+    }
+
     public function clearWhere(): void
     {
         $this->where_conditions = [];
         $this->where_not_in_conditions = [];
+    }
+
+    public function clearOr(): void
+    {
+        $this->or_conditions = [];
     }
 
     /**
@@ -144,7 +200,8 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
     {
         $query_string = $this->getSelectPart();
         $query_string .= 'from '.$this->getTargetTable().' ';
-        $query_string .= $this->getPreparedWherePart();
+        $query_string .= $this->getPreparedWherePart() . ' ';
+        $query_string .= $this->getPreparedOrPart() . ' ';
         $query_string .= $this->getLimitPart();
 
         return $query_string;
@@ -172,7 +229,11 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         $query_string = $this->getQuery();
         $query = $this->PDO
             ->prepare($query_string);
-        $prepared_statements = $this->getPreparedWherePartStatements();
+
+        $prepared_where_statements = $this->getPreparedWherePartStatements();
+        $prepared_or_statements = $this->getPreparedOrPartStatements();
+        $prepared_statements = array_merge($prepared_where_statements, $prepared_or_statements);
+
         $query->execute($prepared_statements);
         $result = $query->fetchAll(PDO::FETCH_ASSOC);
 
@@ -220,6 +281,7 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
     {
         $this->select_columns = ['*'];
         $this->clearWhere();
+        $this->clearOr();
         $this->prepared_statement_index = 0;
     }
 }
