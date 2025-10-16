@@ -173,11 +173,6 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
         return " limit $this->limit_amount";
     }
     
-    public function setPreparedStatementIndex(int $prepared_statement_index): SQLiteSelectQueryBuilder
-    {
-        $this->prepared_statement_index = $prepared_statement_index;
-        return $this;
-    }
 
     public function getPreparedStatementIndex(): int
     {

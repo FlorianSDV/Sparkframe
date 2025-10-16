@@ -72,7 +72,7 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
 
     public function whereNotIn(string $column_name, SelectQueryBuilderInterface|array $values): self
     {
-        if (is_array($values)) {
+        if (is_array($values) && !empty($values)) {
             $values = array_map(fn($value) => ['value' => $value], $values);
             $this->where_not_in_conditions[] = [
                 'column' => $column_name,
@@ -90,7 +90,7 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         return $this;
     }
 
-    public function getPreparedWherePart(): string
+    protected function getPreparedWherePart(): string
     {
         if (count($this->where_conditions) == 0 && count($this->where_not_in_conditions) == 0) {
             return '';
@@ -106,8 +106,7 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
 
         foreach ($this->where_not_in_conditions as &$where_not_in_condition) {
             if ($where_not_in_condition['values'] instanceof MySQLSelectQueryBuilder) {
-                $where_not_in_condition['values']->setPreparedStatementIndex($this->prepared_statement_index);
-                $where_array[] = $where_not_in_condition['column'] . ' not in (' . $where_not_in_condition['values']->getQuery() . ')';
+                $where_array[] = $where_not_in_condition['column'] . ' not in (' . $where_not_in_condition['values']->getQuery($this->prepared_statement_index) . ')';
                 $this->prepared_statement_index = $where_not_in_condition['values']->getPreparedStatementIndex();
             } else {
                 $indexes = [];
@@ -150,7 +149,7 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         return $prepared_statements;
     }
 
-    public function getPreparedOrPart(): string
+    protected function getPreparedOrPart(): string
     {
         $empty_where_part = count($this->where_conditions) == 0 && count($this->where_not_in_conditions) == 0;
         $empty_or_part = count($this->or_conditions) == 0;
@@ -196,8 +195,9 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
     /**
      * @throws Exception
      */
-    public function getQuery(): string
+    public function getQuery(int $prepared_statement_index = 0): string
     {
+        $this->prepared_statement_index = $prepared_statement_index;
         $query_string = $this->getSelectPart();
         $query_string .= 'from '.$this->getTargetTable().' ';
         $query_string .= $this->getPreparedWherePart() . ' ';
@@ -264,12 +264,6 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         }
 
         return " limit $this->limit_amount";
-    }
-    
-    public function setPreparedStatementIndex(int $prepared_statement_index): MySQLSelectQueryBuilder
-    {
-        $this->prepared_statement_index = $prepared_statement_index;
-        return $this;
     }
 
     public function getPreparedStatementIndex(): int

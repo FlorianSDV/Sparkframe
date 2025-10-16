@@ -35,7 +35,5 @@ interface SelectQueryBuilderInterface extends QueryBuilderInterface
 
     public function or(array $filter_criteria): self;
 
-    public function setPreparedStatementIndex(int $prepared_statement_index): self;
-
     public function getPreparedStatementIndex(): int;
 }
