@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Sparkframe\Bootstrap;
 
-require __DIR__ . '/../Tools/Constants.php';
-require __DIR__ . '/../Functions/ViewFunctions.php';
+session_start();
+
+require_once __DIR__ . '/../Tools/Constants.php';
+require_once __DIR__ . '/../Functions/ViewFunctions.php';
+require_once __DIR__ . '/../Functions/SessionFunctions.php';
 
 use Exception;
 use Sparkframe\Database\BaseDatabaseInfoCollection;
