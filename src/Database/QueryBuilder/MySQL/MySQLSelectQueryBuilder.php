@@ -8,6 +8,7 @@ use Exception;
 use PDO;
 use Sparkframe\Database\QueryBuilder\Builders\SelectQueryBuilderInterface;
 use Sparkframe\Database\QueryBuilder\Traits\QueryBuilderTrait;
+use Sparkframe\Exceptions\IncorrectSubquerySelectException;
 
 class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
 {
@@ -17,6 +18,7 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
     protected array $where_conditions = [];
     protected array $where_in_conditions = [];
     protected array $or_conditions = [];
+    protected array $or_in_conditions = [];
     protected int $prepared_statement_index = 0;
 
     public function __construct(protected PDO $PDO, protected string $target_table_name, protected string $entity_class) { }
@@ -70,21 +72,54 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         return $this;
     }
 
+    public function orIn(string $column_name, SelectQueryBuilderInterface|array $values): SelectQueryBuilderInterface
+    {
+        $this->addOrIn($column_name, $values);
+        return $this;
+    }
+
+    public function orNotIn(string $column_name, SelectQueryBuilderInterface|array $values): SelectQueryBuilderInterface
+    {
+        $this->addOrIn($column_name . ' not ', $values);
+        return $this;
+    }
+
+    protected function addOrIn(string $column_name, SelectQueryBuilderInterface|array $values): void
+    {
+        if (is_array($values) && !empty($values)) {
+            $values = array_map(fn($value) => ['value' => $value], $values);
+            $this->or_in_conditions[] = [
+                'column' => $column_name,
+                'values' => $values
+            ];
+        }
+
+        if ($values instanceof MySQLSelectQueryBuilder) {
+            if(!$values->readyForSubQuery()) {
+                throw new IncorrectSubquerySelectException($values->getQuery());
+            }
+            $this->or_in_conditions[] = [
+                'column' => $column_name,
+                'values' => $values
+            ];
+        }
+    }
+
     public function whereIn(string $column_name, SelectQueryBuilderInterface|array $values): self
     {
-        $this->in($column_name, $values);
+        $this->addWhereIn($column_name, $values);
 
         return $this;
     }
 
     public function whereNotIn(string $column_name, SelectQueryBuilderInterface|array $values): self
     {
-        $this->in($column_name . ' not ', $values);
+        $this->addWhereIn($column_name . ' not ', $values);
 
         return $this;
     }
 
-    protected function in(string $column_name, SelectQueryBuilderInterface|array $values): void
+    protected function addWhereIn(string $column_name, MySQLSelectQueryBuilder|array $values): void
     {
         if (is_array($values) && !empty($values)) {
             $values = array_map(fn($value) => ['value' => $value], $values);
@@ -95,11 +130,23 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         }
 
         if ($values instanceof MySQLSelectQueryBuilder) {
+            if(!$values->readyForSubQuery()) {
+                throw new IncorrectSubquerySelectException($values->getQuery());
+            }
+
             $this->where_in_conditions[] = [
                 'column' => $column_name,
                 'values' => $values
             ];
         }
+    }
+
+    public function readyForSubQuery(): bool
+    {
+        $count = count($this->select_columns) === 1;
+        $not_select_all = $this->select_columns !== ['*'];
+
+        return $count && $not_select_all;
     }
 
     protected function getPreparedWherePart(): string
@@ -149,7 +196,7 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
 
         foreach ($this->where_in_conditions as $where_in_condition) {
             if ($where_in_condition['values'] instanceof MySQLSelectQueryBuilder) {
-                $prepared_statements = array_merge($prepared_statements, $where_in_condition['values']->getPreparedWherePartStatements());
+                $prepared_statements = array_merge($prepared_statements, $where_in_condition['values']->getPreparedStatements());
             } else {
                 foreach ($where_in_condition['values'] as &$value) {
                     $parameter_name = ':' . $value['prepared_statement_index'];
@@ -164,7 +211,7 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
     protected function getPreparedOrPart(): string
     {
         $empty_where_part = count($this->where_conditions) == 0 && count($this->where_in_conditions) == 0;
-        $empty_or_part = count($this->or_conditions) == 0;
+        $empty_or_part = count($this->or_conditions) == 0 && count($this->or_in_conditions) == 0;
         if ($empty_where_part || $empty_or_part) {
             return '';
         }
@@ -176,13 +223,28 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
             $or_condition['prepared_statement_index'] = $this->prepared_statement_index;
             $this->prepared_statement_index++;
         }
+        foreach ($this->or_in_conditions as &$or_in_condition) {
+            if ($or_in_condition['values'] instanceof MySQLSelectQueryBuilder) {
+                $or_array[] = $or_in_condition['column'] . ' in (' . $or_in_condition['values']->getQuery($this->prepared_statement_index) . ')';
+                $this->prepared_statement_index = $or_in_condition['values']->getPreparedStatementIndex();
+            } else {
+                $indexes = [];
+                foreach ($or_in_condition['values'] as &$value) {
+                    $value['prepared_statement_index'] = $this->prepared_statement_index;
+                    $indexes[] = $this->prepared_statement_index;
+                    $this->prepared_statement_index++;
+                }
+                $or_array[] = $or_in_condition['column'] . ' in (:' . implode(', :', $indexes) . ')';
+            }
+        }
+
         $or_part .= implode(' and ', $or_array);
         return $or_part;
     }
 
     public function getPreparedOrPartStatements(): array
     {
-        if (count($this->or_conditions) == 0) {
+        if (count($this->or_conditions) == 0 && count($this->or_in_conditions) == 0) {
             return [];
         }
         $prepared_statements = [];
@@ -190,7 +252,26 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
             $parameter_name = ':' . $or_condition['prepared_statement_index'];
             $prepared_statements[$parameter_name] = $or_condition['filter_criterion'];
         }
+
+        foreach ($this->or_in_conditions as $or_in_condition) {
+            if ($or_in_condition['values'] instanceof MySQLSelectQueryBuilder) {
+                $prepared_statements = array_merge($prepared_statements, $or_in_condition['values']->getPreparedStatements());
+            } else {
+                foreach ($or_in_condition['values'] as &$value) {
+                    $parameter_name = ':' . $value['prepared_statement_index'];
+                    $prepared_statements[$parameter_name] = $value['value'];
+                }
+            }
+        }
+
         return $prepared_statements;
+    }
+
+    public function getPreparedStatements(): array
+    {
+        $prepared_where_statements = $this->getPreparedWherePartStatements();
+        $prepared_or_statements = $this->getPreparedOrPartStatements();
+        return array_merge($prepared_where_statements, $prepared_or_statements);
     }
 
     public function clearWhere(): void
@@ -242,9 +323,10 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         $query = $this->PDO
             ->prepare($query_string);
 
-        $prepared_where_statements = $this->getPreparedWherePartStatements();
-        $prepared_or_statements = $this->getPreparedOrPartStatements();
-        $prepared_statements = array_merge($prepared_where_statements, $prepared_or_statements);
+        // $prepared_where_statements = $this->getPreparedWherePartStatements();
+        // $prepared_or_statements = $this->getPreparedOrPartStatements();
+        // $prepared_statements = array_merge($prepared_where_statements, $prepared_or_statements);
+        $prepared_statements = $this->getPreparedStatements();
 
         $query->execute($prepared_statements);
         $result = $query->fetchAll(PDO::FETCH_ASSOC);
