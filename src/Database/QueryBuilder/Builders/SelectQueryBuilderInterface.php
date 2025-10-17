@@ -31,7 +31,15 @@ interface SelectQueryBuilderInterface extends QueryBuilderInterface
      * @param SelectQueryBuilderInterface|array $values
      * @return self
      */
+    public function whereIn(string $column_name, SelectQueryBuilderInterface|array $values): self;
+
+    /**
+     * @param string $column_name
+     * @param SelectQueryBuilderInterface|array $values
+     * @return self
+     */
     public function whereNotIn(string $column_name, SelectQueryBuilderInterface|array $values): self;
+
 
     public function or(array $filter_criteria): self;
 
