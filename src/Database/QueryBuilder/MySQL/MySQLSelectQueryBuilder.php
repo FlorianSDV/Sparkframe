@@ -220,15 +220,12 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
 
         $or_array = [];
         $or_part = 'or ';
-        foreach ($this->or_conditions as &$or_condition_array) {
-            $temp_or_array = [];
-            foreach ($or_condition_array as &$or_condition) {
-                $temp_or_array[] = $or_condition['expression'] . ' :' . $this->prepared_statement_index;
+        foreach ($this->or_conditions as &$or_condition) {
+            $or_array[] = $or_condition['expression'] . ' :' . $this->prepared_statement_index;
             $or_condition['prepared_statement_index'] = $this->prepared_statement_index;
             $this->prepared_statement_index++;
         }
-            $or_array[] = implode(' and ', $temp_or_array);
-        }
+
         foreach ($this->or_in_conditions as &$or_in_condition_array) {
             $temp_or_in_array = [];
             foreach ($or_in_condition_array as &$or_in_condition) {
@@ -258,11 +255,9 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
             return [];
         }
         $prepared_statements = [];
-        foreach ($this->or_conditions as $or_condition_array) {
-            foreach ($or_condition_array as $or_condition) {
+        foreach ($this->or_conditions as $or_condition) {
             $parameter_name = ':' . $or_condition['prepared_statement_index'];
             $prepared_statements[$parameter_name] = $or_condition['filter_criterion'];
-        }
         }
 
         foreach ($this->or_in_conditions as $or_in_condition_array) {
