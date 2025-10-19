@@ -42,36 +42,36 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
         if (count($this->where_conditions) == 0 && count($this->where_in_conditions) == 0) {
             throw new Exception('Cannot use or without where conditions!');
         }
+        $conditions = [];
         foreach ($filter_criteria as $expression => $filter_criterion) {
             if (!is_string($expression)) {
                 throw new Exception('Expression must be a string!');
             }
-            $this->or_conditions[] = [
+            $conditions[] = [
                 'expression' => $expression,
                 'filter_criterion' => $filter_criterion
             ];
         }
+        $this->or_conditions[] = $conditions;
 
         return $this;
     }
 
-    public function orIn(string $column_name, SelectQueryBuilderInterface|array $values): SelectQueryBuilderInterface
+    public function orIn(array $filter_criteria): SelectQueryBuilderInterface
     {
-        $this->addOrIn($column_name, $values);
+        $or_in = [];
+        foreach ($filter_criteria as $column_name => $values) {
+            $or_in[] = $this->addOrIn($column_name, $values);
+        }
+        $this->or_in_conditions[] = $or_in;
         return $this;
     }
 
-    public function orNotIn(string $column_name, SelectQueryBuilderInterface|array $values): SelectQueryBuilderInterface
-    {
-        $this->addOrIn($column_name . ' not ', $values);
-        return $this;
-    }
-
-    protected function addOrIn(string $column_name, SelectQueryBuilderInterface|array $values): void
+    protected function addOrIn(string $column_name, SelectQueryBuilderInterface|array $values): array
     {
         if (is_array($values) && !empty($values)) {
             $values = array_map(fn($value) => ['value' => $value], $values);
-            $this->or_in_conditions[] = [
+            return [
                 'column' => $column_name,
                 'values' => $values
             ];
@@ -81,11 +81,13 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
             if (!$values->readyForSubQuery()) {
                 throw new IncorrectSubquerySelectException($values->getQuery());
             }
-            $this->or_in_conditions[] = [
+            return [
                 'column' => $column_name,
                 'values' => $values
             ];
         }
+
+        throw new Exception('Invalid values for or in condition!');
     }
 
     public function select(string ...$column_names): SQLiteSelectQueryBuilder
@@ -272,27 +274,35 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
 
         $or_array = [];
         $or_part = 'or ';
-        foreach ($this->or_conditions as &$or_condition) {
-            $or_array[] = $or_condition['expression'] . ' :' . $this->prepared_statement_index;
-            $or_condition['prepared_statement_index'] = $this->prepared_statement_index;
-            $this->prepared_statement_index++;
-        }
-        foreach ($this->or_in_conditions as &$or_in_condition) {
-            if ($or_in_condition['values'] instanceof SQLiteSelectQueryBuilder) {
-                $or_array[] = $or_in_condition['column'] . ' in (' . $or_in_condition['values']->getQuery($this->prepared_statement_index) . ')';
-                $this->prepared_statement_index = $or_in_condition['values']->getPreparedStatementIndex();
-            } else {
-                $indexes = [];
-                foreach ($or_in_condition['values'] as &$value) {
-                    $value['prepared_statement_index'] = $this->prepared_statement_index;
-                    $indexes[] = $this->prepared_statement_index;
-                    $this->prepared_statement_index++;
-                }
-                $or_array[] = $or_in_condition['column'] . ' in (:' . implode(', :', $indexes) . ')';
+        foreach ($this->or_conditions as &$or_condition_array) {
+            $temp_or_array = [];
+            foreach ($or_condition_array as &$or_condition) {
+                $temp_or_array[] = $or_condition['expression'] . ' :' . $this->prepared_statement_index;
+                $or_condition['prepared_statement_index'] = $this->prepared_statement_index;
+                $this->prepared_statement_index++;
             }
+            $or_array[] = implode(' and ', $temp_or_array);
+        }
+        foreach ($this->or_in_conditions as &$or_in_condition_array) {
+            $temp_or_in_array = [];
+            foreach ($or_in_condition_array as &$or_in_condition) {
+                if ($or_in_condition['values'] instanceof SQLiteSelectQueryBuilder) {
+                    $temp_or_in_array[] = $or_in_condition['column'] . ' in (' . $or_in_condition['values']->getQuery($this->prepared_statement_index) . ')';
+                    $this->prepared_statement_index = $or_in_condition['values']->getPreparedStatementIndex();
+                } else {
+                    $indexes = [];
+                    foreach ($or_in_condition['values'] as &$value) {
+                        $value['prepared_statement_index'] = $this->prepared_statement_index;
+                        $indexes[] = $this->prepared_statement_index;
+                        $this->prepared_statement_index++;
+                    }
+                    $temp_or_in_array[] = $or_in_condition['column'] . ' in (:' . implode(', :', $indexes) . ')';
+                }
+            }
+            $or_array[] = implode(' and ', $temp_or_in_array);
         }
 
-        $or_part .= implode(' and ', $or_array);
+        $or_part .= implode(' or ', $or_array);
         return $or_part;
     }
 
@@ -302,18 +312,22 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
             return [];
         }
         $prepared_statements = [];
-        foreach ($this->or_conditions as $or_condition) {
-            $parameter_name = ':' . $or_condition['prepared_statement_index'];
-            $prepared_statements[$parameter_name] = $or_condition['filter_criterion'];
+        foreach ($this->or_conditions as $or_condition_array) {
+            foreach ($or_condition_array as $or_condition) {
+                $parameter_name = ':' . $or_condition['prepared_statement_index'];
+                $prepared_statements[$parameter_name] = $or_condition['filter_criterion'];
+            }
         }
 
-        foreach ($this->or_in_conditions as $or_in_condition) {
-            if ($or_in_condition['values'] instanceof SQLiteSelectQueryBuilder) {
-                $prepared_statements = array_merge($prepared_statements, $or_in_condition['values']->getPreparedStatements());
-            } else {
-                foreach ($or_in_condition['values'] as &$value) {
-                    $parameter_name = ':' . $value['prepared_statement_index'];
-                    $prepared_statements[$parameter_name] = $value['value'];
+        foreach ($this->or_in_conditions as $or_in_condition_array) {
+            foreach ($or_in_condition_array as $or_in_condition) {
+                if ($or_in_condition['values'] instanceof SQLiteSelectQueryBuilder) {
+                    $prepared_statements = array_merge($prepared_statements, $or_in_condition['values']->getPreparedStatements());
+                } else {
+                    foreach ($or_in_condition['values'] as &$value) {
+                        $parameter_name = ':' . $value['prepared_statement_index'];
+                        $prepared_statements[$parameter_name] = $value['value'];
+                    }
                 }
             }
         }

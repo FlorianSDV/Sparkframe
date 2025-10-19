@@ -42,9 +42,13 @@ interface SelectQueryBuilderInterface extends QueryBuilderInterface
 
     public function or(array $filter_criteria): self;
 
-    public function orIn(string $column_name, SelectQueryBuilderInterface|array $values): self;
-
-    public function orNotIn(string $column_name, SelectQueryBuilderInterface|array $values): self;
+    /**
+     * @param array<string, SelectQueryBuilderInterface|array> $filter_criteria
+     * @return self
+     */
+    public function orIn(array $filter_criteria): self;
 
     public function getPreparedStatementIndex(): int;
+
+    public function getQuery(int $prepared_statement_index = 0): string;
 }
