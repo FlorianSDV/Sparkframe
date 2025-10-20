@@ -1,6 +1,5 @@
 <?php
 
-use Exception;
 use Sparkframe\Bootstrap\Globals;
 
 function view(string $view_name, array $data = [])
