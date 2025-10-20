@@ -306,7 +306,7 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
         return $or_part;
     }
 
-    public function getPreparedOrPartStatements(): array
+    protected function getPreparedOrPartStatements(): array
     {
         if (count($this->or_conditions) == 0 && count($this->or_in_conditions) == 0) {
             return [];

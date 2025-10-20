@@ -56,18 +56,20 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
 
     public function or(array $filter_criteria): self
     {
-        if (count($this->where_conditions) == 0) {
+        if (count($this->where_conditions) == 0 && count($this->where_in_conditions) == 0) {
             throw new Exception('Cannot use or without where conditions!');
         }
+        $conditions = [];
         foreach ($filter_criteria as $expression => $filter_criterion) {
             if (!is_string($expression)) {
                 throw new Exception('Expression must be a string!');
             }
-            $this->or_conditions[] = [
+            $conditions = [
                 'expression' => $expression,
                 'filter_criterion' => $filter_criterion
             ];
         }
+        $this->or_conditions[] = $conditions;
 
         return $this;
     }
@@ -184,7 +186,7 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         return $where_part;
     }
 
-    public function getPreparedWherePartStatements(): array
+    protected function getPreparedWherePartStatements(): array
     {
         if (count($this->where_conditions) == 0 && count($this->where_in_conditions) == 0) {
             return [];
@@ -220,10 +222,14 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
 
         $or_array = [];
         $or_part = 'or ';
-        foreach ($this->or_conditions as &$or_condition) {
-            $or_array[] = $or_condition['expression'] . ' :' . $this->prepared_statement_index;
-            $or_condition['prepared_statement_index'] = $this->prepared_statement_index;
-            $this->prepared_statement_index++;
+        foreach ($this->or_conditions as &$or_condition_array) {
+            $temp_or_array = [];
+            foreach ($or_condition_array as $or_condition) {
+                $temp_or_array[] = $or_condition['expression'] . ' :' . $this->prepared_statement_index;
+                $or_condition['prepared_statement_index'] = $this->prepared_statement_index;
+                $this->prepared_statement_index++;
+            }
+            $or_array[] = implode(' and ', $temp_or_array);
         }
 
         foreach ($this->or_in_conditions as &$or_in_condition_array) {
@@ -249,7 +255,7 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         return $or_part;
     }
 
-    public function getPreparedOrPartStatements(): array
+    protected function getPreparedOrPartStatements(): array
     {
         if (count($this->or_conditions) == 0 && count($this->or_in_conditions) == 0) {
             return [];
@@ -292,6 +298,7 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
     public function clearOr(): void
     {
         $this->or_conditions = [];
+        $this->or_in_conditions = [];
     }
 
     /**
@@ -332,9 +339,6 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         $query = $this->PDO
             ->prepare($query_string);
 
-        // $prepared_where_statements = $this->getPreparedWherePartStatements();
-        // $prepared_or_statements = $this->getPreparedOrPartStatements();
-        // $prepared_statements = array_merge($prepared_where_statements, $prepared_or_statements);
         $prepared_statements = $this->getPreparedStatements();
 
         $query->execute($prepared_statements);
