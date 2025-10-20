@@ -64,7 +64,7 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
             if (!is_string($expression)) {
                 throw new Exception('Expression must be a string!');
             }
-            $conditions = [
+            $conditions[] = [
                 'expression' => $expression,
                 'filter_criterion' => $filter_criterion
             ];
@@ -224,7 +224,7 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         $or_part = 'or ';
         foreach ($this->or_conditions as &$or_condition_array) {
             $temp_or_array = [];
-            foreach ($or_condition_array as $or_condition) {
+            foreach ($or_condition_array as &$or_condition) {
                 $temp_or_array[] = $or_condition['expression'] . ' :' . $this->prepared_statement_index;
                 $or_condition['prepared_statement_index'] = $this->prepared_statement_index;
                 $this->prepared_statement_index++;
@@ -261,9 +261,11 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
             return [];
         }
         $prepared_statements = [];
-        foreach ($this->or_conditions as $or_condition) {
-            $parameter_name = ':' . $or_condition['prepared_statement_index'];
-            $prepared_statements[$parameter_name] = $or_condition['filter_criterion'];
+        foreach ($this->or_conditions as $or_condition_array) {
+            foreach ($or_condition_array as $or_condition) {
+                $parameter_name = ':' . $or_condition['prepared_statement_index'];
+                $prepared_statements[$parameter_name] = $or_condition['filter_criterion'];
+            }
         }
 
         foreach ($this->or_in_conditions as $or_in_condition_array) {
