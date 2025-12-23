@@ -6,6 +6,7 @@ namespace Sparkframe\Controller;
 use Sparkframe\Attributes\Route;
 use Sparkframe\Request\Request;
 use Sparkframe\Tools\MethodRoute;
+use function Sparkframe\Functions\view;
 
 abstract class Controller
 {
