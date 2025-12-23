@@ -1,12 +1,14 @@
 <?php
 
+namespace Sparkframe\Functions;
+
 use Sparkframe\Bootstrap\Globals;
 
 function view(string $view_name, array $data = [])
 {
     $view_path = Globals::getRootdir() . '/src/View/' . $view_name . '.php';
     if (!file_exists($view_path)) {
-        throw new Exception('View not found');
+        throw new \Exception('View not found');
     }
     extract($data);
     require $view_path;
