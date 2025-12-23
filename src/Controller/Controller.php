@@ -1,12 +1,12 @@
 <?php
 
 declare(strict_types=1);
-
 namespace Sparkframe\Controller;
 
 use Sparkframe\Attributes\Route;
 use Sparkframe\Request\Request;
 use Sparkframe\Tools\MethodRoute;
+use function Sparkframe\Functions\view;
 
 abstract class Controller
 {
@@ -43,5 +43,15 @@ abstract class Controller
         }
 
         return $controller_routes;
+    }
+
+    /**
+     * Render a view with the given data.
+     * @param string $view_name The name of the view to render.
+     * @param array $data The data to pass to the view.
+     */
+    public function render(string $view_name, array $data = []): void
+    {
+        view($view_name, $data);
     }
 }
