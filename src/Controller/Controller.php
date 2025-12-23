@@ -54,4 +54,14 @@ abstract class Controller
     {
         view($view_name, $data);
     }
+
+    /**
+     * Redirect to the given location.
+     * @param string $location The location to redirect to.
+     */
+    protected function redirect(string $location): void
+    {
+        header('Location: ' . $location);
+        exit;
+    }
 }
