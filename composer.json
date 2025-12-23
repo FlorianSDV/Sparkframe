@@ -9,6 +9,10 @@
             "Sparkframe\\": "src/"
         }
     },
+    "files": [
+      "src/Functions/SessionFunctions.php",
+      "src/Functions/ViewFunctions.php"
+    ],
     "authors": [
         {
             "name": "FlorianSDV",
