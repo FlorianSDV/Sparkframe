@@ -21,8 +21,10 @@ class SQLiteDeleteQueryBuilderTest extends TestCase
         $deleteQueryBuilder = new SQLiteDeleteQueryBuilder($pdo, 'users', MockEntity::class);
         $deleteQueryBuilder->addEntity($mock_entity);
 
-        $query = $reflectionMethod->invoke($deleteQueryBuilder, MockEntity::getPrimaryKeyColumnName());
+        $primaryKeyColumnName = MockEntity::getPrimaryKeyColumnName();
+        $query = $reflectionMethod->invoke($deleteQueryBuilder, $primaryKeyColumnName);
 
-        $this->assertEquals($query, 'delete from users where id in (?)');
+        $expectedQuery = 'delete from users where ' . $primaryKeyColumnName . ' in (?)';
+        $this->assertEquals($query, $expectedQuery);
     }
 }
