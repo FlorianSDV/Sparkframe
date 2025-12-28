@@ -13,14 +13,10 @@ class SQLiteInsertQueryBuilderTest extends TestCase
 {
     public function testInsertQuery()
     {
-        $newEntity = new MockEntity();
-        $newEntity->setId(1);
-        $newEntity->name = 'John Doe';
+        $pdo = $this->createMock(PDO::class);
 
-        $pdo = new PDO('sqlite::memory:');
         $insertQueryBuilder = new SQLiteInsertQueryBuilder($pdo, 'users', MockEntity::class);
         $reflectionMethod = new \ReflectionMethod($insertQueryBuilder, 'getQuery');
-
 
         $columns = MockEntity::getColumnNames();
 
