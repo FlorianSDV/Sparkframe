@@ -59,8 +59,28 @@ class SQLiteDeleteQueryBuilderTest extends TestCase
     #[DataProvider('mockEntityProvider')]
     public function testDeleteQueryWithValues(array $mock_entities): void
     {
-        // TODO: implement
-        $this->assertEquals(1, 1);
+        $primaryKeyColumnName = MockEntity::getPrimaryKeyColumnName();
+
+        $deleteQueryBuilder = $this->sqlite_database_wrapper
+            ->deleteQuery('users', MockEntity::class);
+    
+        $primaryKeysValues = [];
+        foreach ($mock_entities as $mock_entity) {
+            $deleteQueryBuilder->addEntity($mock_entity);
+            $primaryKeysValues[] = (string)$mock_entity->$primaryKeyColumnName;
+        }
+        
+        $query = new ReflectionMethod(SQLiteDeleteQueryBuilder::class, 'getQuery')
+            ->invoke($deleteQueryBuilder, $primaryKeyColumnName);
+
+        foreach ($primaryKeysValues as $primaryKeyValue) {
+            $query = preg_replace('/\?/', $primaryKeyValue, $query, 1);
+        }
+
+        $placeholder = implode(', ', $primaryKeysValues);
+        $expectedQuery = 'delete from users where ' . $primaryKeyColumnName . ' in (' . $placeholder . ')';
+
+        $this->assertEquals($expectedQuery, $query);
     }
 
     #[DataProvider('mockEntityProvider')]
