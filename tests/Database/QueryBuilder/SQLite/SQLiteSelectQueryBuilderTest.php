@@ -404,4 +404,12 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         
         $this->assertEquals($expected_query, $query);
     }
+
+    public function testGetPreparedStatementIndex(): void {
+        $this->sqlite_select_query_builder
+            ->where([UserMockEntity::ID . " = " => 1])
+            ->getQuery();
+        
+        $this->assertEquals(1, $this->sqlite_select_query_builder->getPreparedStatementIndex());
+    }
 }
