@@ -265,4 +265,71 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         
         $this->assertEquals($expected_query, $query);
     }
+
+    public function testOr(): void
+    {
+        $this->sqlite_select_query_builder
+            ->where([UserMockEntity::ID . " = " => 1])
+            ->or([UserMockEntity::AGE . " > " => 20]);
+
+        // Test raw
+        $expected_query = 'select * from users where id =  :0 or age >  :1 ';
+        $query = $this->sqlite_select_query_builder->getQuery();
+        
+        $this->assertEquals($expected_query, $query);
+
+        // Test with values
+        $expected_query = 'select * from users where id =  1 or age >  20 ';
+        $query = $this->getQueryWithValues();
+        
+        $this->assertEquals($expected_query, $query);
+    }
+
+    public function testOrWithAnd(): void
+    {
+        $this->sqlite_select_query_builder
+            ->where([UserMockEntity::ID . " = " => 1])
+            ->or([
+                UserMockEntity::AGE . " > " => 20,
+                UserMockEntity::EMAIL_ADDRESS => "'example@test.com'"
+            ]);
+
+        // Test raw
+        $expected_query = 'select * from users where id =  :0 or age >  :1 and email_address :2 ';
+        $query = $this->sqlite_select_query_builder->getQuery();
+        
+        $this->assertEquals($expected_query, $query);
+
+        // Test with values
+        $expected_query = "select * from users where id =  1 or age >  20 and email_address 'example@test.com' ";
+        $query = $this->getQueryWithValues();
+        
+        $this->assertEquals($expected_query, $query);
+    }
+
+    public function testMultipleOrWithAnd(): void
+    {
+        $this->sqlite_select_query_builder
+            ->where([UserMockEntity::ID . " = " => 1])
+            ->or([
+                UserMockEntity::AGE . " > " => 20,
+                UserMockEntity::EMAIL_ADDRESS => "'example@test.com'"
+            ])
+            ->or([
+                UserMockEntity::AGE . " > " => 30,
+                UserMockEntity::EMAIL_ADDRESS => "'example_2@test.com'"
+            ]);
+
+        // Test raw
+        $expected_query = 'select * from users where id =  :0 or age >  :1 and email_address :2 or age >  :3 and email_address :4 ';
+        $query = $this->sqlite_select_query_builder->getQuery();
+        
+        $this->assertEquals($expected_query, $query);
+
+        // Test with values
+        $expected_query = "select * from users where id =  1 or age >  20 and email_address 'example@test.com' or age >  30 and email_address 'example_2@test.com' ";
+        $query = $this->getQueryWithValues();
+        
+        $this->assertEquals($expected_query, $query);
+    }
 }
