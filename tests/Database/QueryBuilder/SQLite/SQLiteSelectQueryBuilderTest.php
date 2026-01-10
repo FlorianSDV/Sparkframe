@@ -60,6 +60,23 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         $this->assertEquals($expected_query, $query);
     }
 
+    public function testWhereIn(): void
+    {
+        $this->sqlite_select_query_builder->whereIn(MockEntity::NAME, ["'John'", "'Jane'", "'Jim'"]);
+
+        // Test raw
+        $expected_query = 'select * from users where name in (:0, :1, :2)  ';
+        $query = $this->sqlite_select_query_builder->getQuery();
+        
+        $this->assertEquals($expected_query, $query);
+        
+        // Test with values
+        $expected_query = "select * from users where name in ('John', 'Jane', 'Jim')  ";
+        $query = $this->createQueryWithValues();
+        
+        $this->assertEquals($expected_query, $query);
+    }
+
     /** 
      * Replace the placeholders in the query with actual values.
      * @return string The query with the values replaced.
