@@ -380,4 +380,15 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         
         $this->assertEquals($expected_query, $query);
     }
+
+    public function testClearWhere(): void {
+        $query = $this->sqlite_select_query_builder
+            ->where([UserMockEntity::ID . " = " => 1])
+            ->clearWhere();
+
+        $expected_query = 'select * from users   ';
+        $query = $this->sqlite_select_query_builder->getQuery();
+        
+        $this->assertEquals($expected_query, $query);
+    }
 }
