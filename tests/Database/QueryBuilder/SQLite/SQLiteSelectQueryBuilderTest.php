@@ -78,6 +78,26 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         $this->assertEquals($expected_query, $query);
     }
 
+    public function testWhereWithAnd(): void
+    {
+        $this->sqlite_select_query_builder->where([
+            UserMockEntity::ID . " = " => 1,
+            UserMockEntity::NAME . " = " => "'John'"
+        ]);
+
+        // Test raw
+        $expected_query = 'select * from users where id =  :0 and name =  :1  ';
+        $query = $this->sqlite_select_query_builder->getQuery();
+        
+        $this->assertEquals($expected_query, $query);
+
+        // Test with values
+        $expected_query = "select * from users where id =  1 and name =  'John'  ";
+        $query = $this->getQueryWithValues();
+        
+        $this->assertEquals($expected_query, $query);
+    }
+
     public function testWhereIn(): void
     {
         $this->sqlite_select_query_builder->whereIn(UserMockEntity::NAME, ["'John'", "'Jane'", "'Jim'"]);
@@ -90,6 +110,25 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         
         // Test with values
         $expected_query = "select * from users where name in ('John', 'Jane', 'Jim')  ";
+        $query = $this->getQueryWithValues();
+        
+        $this->assertEquals($expected_query, $query);
+    }
+    
+    public function testWhereInWithAnd(): void
+    {
+        $this->sqlite_select_query_builder
+            ->whereIn(UserMockEntity::NAME, ["'John'", "'Jane'", "'Jim'"])
+            ->where([UserMockEntity::AGE . " > " => 20]);
+
+        // Test raw
+        $expected_query = 'select * from users where age >  :0 and name in (:1, :2, :3)  ';
+        $query = $this->sqlite_select_query_builder->getQuery();
+        
+        $this->assertEquals($expected_query, $query);
+        
+        // Test with values
+        $expected_query = "select * from users where age >  20 and name in ('John', 'Jane', 'Jim')  ";
         $query = $this->getQueryWithValues();
         
         $this->assertEquals($expected_query, $query);
@@ -111,6 +150,33 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         
         // Test with values
         $expected_query = "select * from users where id in (select user_id from notes where title =  'Groceries'  )  ";
+        $query = $this->getQueryWithValues();
+        
+        $this->assertEquals($expected_query, $query);
+    }
+
+    public function testWhereInWithMultipleSubqueries(): void
+    {
+        $sub_query_1 = $this->sqlite_database_wrapper->selectQuery('notes', NoteMockEntity::class)
+            ->select(NoteMockEntity::USER_ID)
+            ->where([NoteMockEntity::TITLE . " = " => "'Groceries'"]);
+
+        $sub_query_2 = $this->sqlite_database_wrapper->selectQuery('users', UserMockEntity::class)
+            ->select(UserMockEntity::ID)
+            ->where([UserMockEntity::AGE . " > " => 20]);
+
+        $this->sqlite_select_query_builder
+            ->whereIn(UserMockEntity::ID, $sub_query_1)
+            ->whereIn(UserMockEntity::ID, $sub_query_2);
+
+        // Test raw
+        $expected_query = "select * from users where id in (select user_id from notes where title =  :0  ) and id in (select id from users where age >  :1  )  ";
+        $query = $this->sqlite_select_query_builder->getQuery();
+        
+        $this->assertEquals($expected_query, $query);
+        
+        // Test with values
+        $expected_query = "select * from users where id in (select user_id from notes where title =  'Groceries'  ) and id in (select id from users where age >  20  )  ";
         $query = $this->getQueryWithValues();
         
         $this->assertEquals($expected_query, $query);
