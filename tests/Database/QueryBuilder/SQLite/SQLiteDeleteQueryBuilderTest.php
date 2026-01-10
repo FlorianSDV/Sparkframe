@@ -83,15 +83,10 @@ class SQLiteDeleteQueryBuilderTest extends TestCase
         $this->assertEquals($expectedQuery, $query);
     }
 
-    #[DataProvider('mockEntityProvider')]
-    public function testSettingEntityClassName(array $mock_entities): void
+    public function testSettingEntityClassName(): void
     {
         $deleteQueryBuilder = $this->sqlite_database_wrapper
             ->deleteQuery('users', MockEntity::class);
-
-        foreach ($mock_entities as $mock_entity) {
-            $deleteQueryBuilder->addEntity($mock_entity);
-        }
 
         $class_name = new ReflectionClass($deleteQueryBuilder)
             ->getProperty('entity_class')

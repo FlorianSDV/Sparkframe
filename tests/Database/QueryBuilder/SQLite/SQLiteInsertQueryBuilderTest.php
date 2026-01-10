@@ -74,13 +74,8 @@ class SQLiteInsertQueryBuilderTest extends TestCase
         }
     }
 
-    #[DataProvider('mockEntityProvider')]
-    public function testSettingEntityClassName(array $mock_entities): void
+    public function testSettingEntityClassName(): void
     {
-        foreach ($mock_entities as $mock_entity) {
-            $this->sqlite_insert_query_builder->addEntity($mock_entity);
-        }
-
         $class_name = new ReflectionClass($this->sqlite_insert_query_builder)
             ->getProperty('entity_class')
             ->getValue($this->sqlite_insert_query_builder);
