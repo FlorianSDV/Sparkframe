@@ -441,4 +441,16 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         
         $this->assertEquals($expected_query, $query);
     }
+
+    public function testReadyForSubQuery(): void {
+        $this->sqlite_select_query_builder->select(UserMockEntity::ID);
+        $this->assertTrue($this->sqlite_select_query_builder->readyForSubQuery());
+    }
+
+    public function testNotReadyForSubQuery(): void {
+        $this->assertFalse($this->sqlite_select_query_builder->readyForSubQuery());
+        
+        $this->sqlite_select_query_builder->select(UserMockEntity::ID, UserMockEntity::NAME);
+        $this->assertFalse($this->sqlite_select_query_builder->readyForSubQuery());
+    }
 }
