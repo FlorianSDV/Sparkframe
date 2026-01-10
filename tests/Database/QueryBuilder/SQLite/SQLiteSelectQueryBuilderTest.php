@@ -427,4 +427,18 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         $index = $this->sqlite_select_query_builder->getPreparedStatementIndex();
         $this->assertEquals($expected_index, $index);
     }
+
+    public function testCleanUpp(): void {
+        $this->sqlite_select_query_builder
+            ->where([UserMockEntity::ID . " = " => 1])
+            ->whereIn(UserMockEntity::AGE, [20, 30])
+            ->or([UserMockEntity::AGE . " > " => 20])
+            ->orIn([UserMockEntity::EMAIL_ADDRESS => ["'test@example.com'"]])
+            ->cleanUp();
+
+        $expected_query = 'select * from users   ';
+        $query = $this->sqlite_select_query_builder->getQuery();
+        
+        $this->assertEquals($expected_query, $query);
+    }
 }
