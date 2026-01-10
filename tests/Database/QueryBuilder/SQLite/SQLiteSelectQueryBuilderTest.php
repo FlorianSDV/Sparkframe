@@ -412,4 +412,19 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         
         $this->assertEquals(1, $this->sqlite_select_query_builder->getPreparedStatementIndex());
     }
+
+    public function testGetQueryWithDifferentIndex(): void {
+        $index = 10;
+        $query = $this->sqlite_select_query_builder
+            ->where([UserMockEntity::ID . " = " => 1])
+            ->getQuery($index);
+            
+        $expected_query = "select * from users where id =  :$index  ";
+        
+        $this->assertEquals($expected_query, $query);
+        
+        $expected_index = 11;
+        $index = $this->sqlite_select_query_builder->getPreparedStatementIndex();
+        $this->assertEquals($expected_index, $index);
+    }
 }
