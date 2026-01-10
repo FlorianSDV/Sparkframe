@@ -391,4 +391,17 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         
         $this->assertEquals($expected_query, $query);
     }
+
+    public function testClearOr(): void {
+        $this->sqlite_select_query_builder
+            ->where([UserMockEntity::ID . " = " => 1])
+            ->or([UserMockEntity::AGE . " > " => 20])
+            ->clearOr();
+
+        // Test raw
+        $expected_query = 'select * from users where id =  :0  ';
+        $query = $this->sqlite_select_query_builder->getQuery();
+        
+        $this->assertEquals($expected_query, $query);
+    }
 }
