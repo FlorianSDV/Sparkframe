@@ -8,7 +8,8 @@ use Pdo\Sqlite;
 use PHPUnit\Framework\TestCase;
 use Sparkframe\Database\QueryBuilder\SQLite\SQLiteSelectQueryBuilder;
 use Sparkframe\Database\SqliteDatabaseWrapper;
-use Sparkframe\Tests\Mocks\Entities\MockEntity;
+use Sparkframe\Tests\Mocks\Entities\NoteMockEntity;
+use Sparkframe\Tests\Mocks\Entities\UserMockEntity;
 
 class SQLiteSelectQueryBuilderTest extends TestCase
 {

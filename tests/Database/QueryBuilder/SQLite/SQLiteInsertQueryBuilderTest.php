@@ -7,7 +7,7 @@ namespace Sparkframe\Tests\Database\QueryBuilder\SQLite;
 use Pdo\Sqlite;
 use PHPUnit\Framework\TestCase;
 use Sparkframe\Database\SqliteDatabaseWrapper;
-use Sparkframe\Tests\Mocks\Entities\MockEntity;
+use Sparkframe\Tests\Mocks\Entities\UserMockEntity;
 use PHPUnit\Framework\Attributes\DataProvider;
 use ReflectionClass;
 use ReflectionMethod;
@@ -20,18 +20,24 @@ class SQLiteInsertQueryBuilderTest extends TestCase
     public function setUp(): void
     {
         $this->sqlite_insert_query_builder = new SqliteDatabaseWrapper($this->createStub(Sqlite::class))
-            ->insertQuery('users', MockEntity::class);
+            ->insertQuery('users', UserMockEntity::class);
     }
 
     public static function mockEntityProvider(): array
     {
-        $mock_entity_1 = new MockEntity();
+        $mock_entity_1 = new UserMockEntity();
         $mock_entity_1->setId(1);
         $mock_entity_1->name = 'John Doe';
+        $mock_entity_1->email_address = 'john.doe@example.com';
+        $mock_entity_1->age = 30;
+        $mock_entity_1->phone_number = '1234567890';
 
-        $mock_entity_2 = new MockEntity();
+        $mock_entity_2 = new UserMockEntity();
         $mock_entity_2->setId(2);
         $mock_entity_2->name = 'Jane Doe';
+        $mock_entity_2->email_address = 'jane.doe@example.com';
+        $mock_entity_2->age = 25;
+        $mock_entity_2->phone_number = '0987654321';
 
         return [
             'single_entity' => [[$mock_entity_1]],
@@ -41,26 +47,25 @@ class SQLiteInsertQueryBuilderTest extends TestCase
 
     public function testInsertQuery()
     {
-        $reflectionMethod = new ReflectionMethod($this->sqlite_insert_query_builder, 'getQuery');
+        $columns = UserMockEntity::getColumnNames();
 
-        $columns = MockEntity::getColumnNames();
+        $query = new ReflectionMethod(SQLiteInsertQueryBuilder::class, 'getQuery')
+            ->invoke($this->sqlite_insert_query_builder, $columns);
 
-        $query = $reflectionMethod->invoke($this->sqlite_insert_query_builder, $columns);
-
-        $p_key_name = MockEntity::getPrimaryKeyColumnName();
-        $expected_query = "insert into users ($p_key_name, name) values (:$p_key_name, :name)";
+        $p_key_name = UserMockEntity::getPrimaryKeyColumnName();
+        $expected_query = "insert into users ($p_key_name, name, email_address, age, phone_number) values (:$p_key_name, :name, :email_address, :age, :phone_number)";
         $this->assertEquals($expected_query, $query);
     }
 
     #[DataProvider('mockEntityProvider')]
     public function testGetQueryWithValues(array $mock_entities): void
     {
-        $p_key_name = MockEntity::getPrimaryKeyColumnName();
-        $base_query = new ReflectionMethod($this->sqlite_insert_query_builder, 'getQuery')
-            ->invoke($this->sqlite_insert_query_builder, MockEntity::getColumnNames());
-        $base_expected_query = "insert into users ($p_key_name, name) values (:$p_key_name, :name)";
+        $p_key_name = UserMockEntity::getPrimaryKeyColumnName();
+        $base_query = new ReflectionMethod(SQLiteInsertQueryBuilder::class, 'getQuery')
+            ->invoke($this->sqlite_insert_query_builder, UserMockEntity::getColumnNames());
+        $base_expected_query = "insert into users ($p_key_name, name, email_address, age, phone_number) values (:$p_key_name, :name, :email_address, :age, :phone_number)";
 
-        /** @var MockEntity $mock_entity  */
+        /** @var UserMockEntity $mock_entity  */
         foreach ($mock_entities as $mock_entity) {
             $query = $base_query;
             $expected_query = $base_expected_query;
@@ -80,6 +85,6 @@ class SQLiteInsertQueryBuilderTest extends TestCase
             ->getProperty('entity_class')
             ->getValue($this->sqlite_insert_query_builder);
 
-        $this->assertEquals($class_name, MockEntity::class);
+        $this->assertEquals($class_name, UserMockEntity::class);
     }
 }

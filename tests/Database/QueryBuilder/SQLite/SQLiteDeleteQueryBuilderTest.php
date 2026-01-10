@@ -11,7 +11,7 @@ use ReflectionClass;
 use ReflectionMethod;
 use Sparkframe\Database\QueryBuilder\SQLite\SQLiteDeleteQueryBuilder;
 use Sparkframe\Database\SqliteDatabaseWrapper;
-use Sparkframe\Tests\Mocks\Entities\MockEntity;
+use Sparkframe\Tests\Mocks\Entities\UserMockEntity;
 
 class SQLiteDeleteQueryBuilderTest extends TestCase
 {
@@ -20,18 +20,24 @@ class SQLiteDeleteQueryBuilderTest extends TestCase
     public function setUp(): void
     {
         $this->sqlite_delete_query_builder = new SqliteDatabaseWrapper($this->createStub(Sqlite::class))
-            ->deleteQuery('users', MockEntity::class);
+            ->deleteQuery('users', UserMockEntity::class);
     }
 
     public static function mockEntityProvider(): array
     {
-        $mock_entity_1 = new MockEntity();
+        $mock_entity_1 = new UserMockEntity();
         $mock_entity_1->setId(1);
         $mock_entity_1->name = 'John Doe';
+        $mock_entity_1->email_address = 'john.doe@example.com';
+        $mock_entity_1->age = 30;
+        $mock_entity_1->phone_number = '1234567890';
 
-        $mock_entity_2 = new MockEntity();
+        $mock_entity_2 = new UserMockEntity();
         $mock_entity_2->setId(2);
         $mock_entity_2->name = 'Jane Doe';
+        $mock_entity_2->email_address = 'jane.doe@example.com';
+        $mock_entity_2->age = 25;
+        $mock_entity_2->phone_number = '0987654321';
 
         return [
             'single_entity' => [[$mock_entity_1]],
@@ -46,7 +52,7 @@ class SQLiteDeleteQueryBuilderTest extends TestCase
             $this->sqlite_delete_query_builder->addEntity($mock_entity);
         }
 
-        $p_key_name = MockEntity::getPrimaryKeyColumnName();
+        $p_key_name = UserMockEntity::getPrimaryKeyColumnName();
 
         $query = new ReflectionMethod(SQLiteDeleteQueryBuilder::class, 'getQuery') 
             ->invoke($this->sqlite_delete_query_builder, $p_key_name);
@@ -60,7 +66,7 @@ class SQLiteDeleteQueryBuilderTest extends TestCase
     #[DataProvider('mockEntityProvider')]
     public function testDeleteQueryWithValues(array $mock_entities): void
     {
-        $p_key_name = MockEntity::getPrimaryKeyColumnName();
+        $p_key_name = UserMockEntity::getPrimaryKeyColumnName();
     
         $primaryKeysValues = [];
         foreach ($mock_entities as $mock_entity) {
@@ -87,6 +93,6 @@ class SQLiteDeleteQueryBuilderTest extends TestCase
             ->getProperty('entity_class')
             ->getValue($this->sqlite_delete_query_builder);
 
-        $this->assertEquals($class_name, MockEntity::class);
+        $this->assertEquals($class_name, UserMockEntity::class);
     }
 }
