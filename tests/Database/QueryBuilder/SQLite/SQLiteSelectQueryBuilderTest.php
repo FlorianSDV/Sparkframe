@@ -181,4 +181,88 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         
         $this->assertEquals($expected_query, $query);
     }
+
+    public function testWhereNotIn(): void
+    {
+        $this->sqlite_select_query_builder->whereNotIn(UserMockEntity::NAME, ["'John'", "'Jane'", "'Jim'"]);
+
+        // Test raw
+        $expected_query = 'select * from users where name not  in (:0, :1, :2)  ';
+        $query = $this->sqlite_select_query_builder->getQuery();
+        
+        $this->assertEquals($expected_query, $query);
+        
+        // Test with values
+        $expected_query = "select * from users where name not  in ('John', 'Jane', 'Jim')  ";
+        $query = $this->getQueryWithValues();
+        
+        $this->assertEquals($expected_query, $query);
+    }
+    
+    public function testWhereNotInWithAnd(): void
+    {
+        $this->sqlite_select_query_builder
+            ->whereNotIn(UserMockEntity::NAME, ["'John'", "'Jane'", "'Jim'"])
+            ->where([UserMockEntity::AGE . " > " => 20]);
+
+        // Test raw
+        $expected_query = 'select * from users where age >  :0 and name not  in (:1, :2, :3)  ';
+        $query = $this->sqlite_select_query_builder->getQuery();
+        
+        $this->assertEquals($expected_query, $query);
+        
+        // Test with values
+        $expected_query = "select * from users where age >  20 and name not  in ('John', 'Jane', 'Jim')  ";
+        $query = $this->getQueryWithValues();
+        
+        $this->assertEquals($expected_query, $query);
+    }
+
+    public function testWhereNotInWithSubquery(): void
+    {
+        $sub_query = $this->sqlite_database_wrapper->selectQuery('notes', NoteMockEntity::class)
+            ->select(NoteMockEntity::USER_ID)
+            ->where([NoteMockEntity::TITLE . " = " => "'Groceries'"]);
+
+        $this->sqlite_select_query_builder->whereNotIn(UserMockEntity::ID, $sub_query);
+
+        // Test raw
+        $expected_query = "select * from users where id not  in (select user_id from notes where title =  :0  )  ";
+        $query = $this->sqlite_select_query_builder->getQuery();
+        
+        $this->assertEquals($expected_query, $query);
+        
+        // Test with values
+        $expected_query = "select * from users where id not  in (select user_id from notes where title =  'Groceries'  )  ";
+        $query = $this->getQueryWithValues();
+        
+        $this->assertEquals($expected_query, $query);
+    }
+
+    public function testWhereNotInWithMultipleSubqueries(): void
+    {
+        $sub_query_1 = $this->sqlite_database_wrapper->selectQuery('notes', NoteMockEntity::class)
+            ->select(NoteMockEntity::USER_ID)
+            ->where([NoteMockEntity::TITLE . " = " => "'Groceries'"]);
+
+        $sub_query_2 = $this->sqlite_database_wrapper->selectQuery('users', UserMockEntity::class)
+            ->select(UserMockEntity::ID)
+            ->where([UserMockEntity::AGE . " > " => 20]);
+
+        $this->sqlite_select_query_builder
+            ->whereNotIn(UserMockEntity::ID, $sub_query_1)
+            ->whereNotIn(UserMockEntity::ID, $sub_query_2);
+
+        // Test raw
+        $expected_query = "select * from users where id not  in (select user_id from notes where title =  :0  ) and id not  in (select id from users where age >  :1  )  ";
+        $query = $this->sqlite_select_query_builder->getQuery();
+        
+        $this->assertEquals($expected_query, $query);
+        
+        // Test with values
+        $expected_query = "select * from users where id not  in (select user_id from notes where title =  'Groceries'  ) and id not  in (select id from users where age >  20  )  ";
+        $query = $this->getQueryWithValues();
+        
+        $this->assertEquals($expected_query, $query);
+    }
 }
