@@ -60,6 +60,15 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         $this->assertEquals($expected_query, $query);
     }
 
+    public function testLimit(): void
+    {
+        $query = $this->sqlite_select_query_builder
+            ->limit(10)
+            ->getQuery();
+        
+        $expected_query = 'select * from users    limit 10';
+        $this->assertEquals($expected_query, $query);
+    }
 
     public function testWhere(): void
     {
