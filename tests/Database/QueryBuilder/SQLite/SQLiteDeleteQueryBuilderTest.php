@@ -15,11 +15,14 @@ use Sparkframe\Tests\Mocks\Entities\MockEntity;
 
 class SQLiteDeleteQueryBuilderTest extends TestCase
 {
-    private SqliteDatabaseWrapper $sqlite_database_wrapper;
+    private SQLiteDeleteQueryBuilder $sqlite_delete_query_builder;
+
     public function setUp(): void
     {
-        $this->sqlite_database_wrapper = new SqliteDatabaseWrapper($this->createStub(Sqlite::class));
+        $this->sqlite_delete_query_builder = new SqliteDatabaseWrapper($this->createStub(Sqlite::class))
+            ->deleteQuery('users', MockEntity::class);
     }
+
     public static function mockEntityProvider(): array
     {
         $mock_entity_1 = new MockEntity();
@@ -39,58 +42,50 @@ class SQLiteDeleteQueryBuilderTest extends TestCase
     #[DataProvider('mockEntityProvider')]
     public function testDeleteQuery(array $mock_entities): void
     {
-        $deleteQueryBuilder = $this->sqlite_database_wrapper
-            ->deleteQuery('users', MockEntity::class);
-        $reflectionMethod = new ReflectionMethod(SQLiteDeleteQueryBuilder::class, 'getQuery');
-        
         foreach ($mock_entities as $mock_entity) {
-            $deleteQueryBuilder->addEntity($mock_entity);
+            $this->sqlite_delete_query_builder->addEntity($mock_entity);
         }
-        
-        $primaryKeyColumnName = MockEntity::getPrimaryKeyColumnName();
-        $query = $reflectionMethod->invoke($deleteQueryBuilder, $primaryKeyColumnName);
+
+        $p_key_name = MockEntity::getPrimaryKeyColumnName();
+
+        $query = new ReflectionMethod(SQLiteDeleteQueryBuilder::class, 'getQuery') 
+            ->invoke($this->sqlite_delete_query_builder, $p_key_name);
 
         $placeholder = str_repeat('?, ', count($mock_entities) - 1) . '?';
-        $expectedQuery = 'delete from users where ' . $primaryKeyColumnName . ' in (' . $placeholder . ')';
+        $expected_query = 'delete from users where ' . $p_key_name . ' in (' . $placeholder . ')';
         
-        $this->assertEquals($query, $expectedQuery);
+        $this->assertEquals($expected_query, $query);
     }
 
     #[DataProvider('mockEntityProvider')]
     public function testDeleteQueryWithValues(array $mock_entities): void
     {
-        $primaryKeyColumnName = MockEntity::getPrimaryKeyColumnName();
-
-        $deleteQueryBuilder = $this->sqlite_database_wrapper
-            ->deleteQuery('users', MockEntity::class);
+        $p_key_name = MockEntity::getPrimaryKeyColumnName();
     
         $primaryKeysValues = [];
         foreach ($mock_entities as $mock_entity) {
-            $deleteQueryBuilder->addEntity($mock_entity);
-            $primaryKeysValues[] = (string)$mock_entity->$primaryKeyColumnName;
+            $this->sqlite_delete_query_builder->addEntity($mock_entity);
+            $primaryKeysValues[] = (string)$mock_entity->$p_key_name;
         }
         
         $query = new ReflectionMethod(SQLiteDeleteQueryBuilder::class, 'getQuery')
-            ->invoke($deleteQueryBuilder, $primaryKeyColumnName);
+            ->invoke($this->sqlite_delete_query_builder, $p_key_name);
 
         foreach ($primaryKeysValues as $primaryKeyValue) {
             $query = preg_replace('/\?/', $primaryKeyValue, $query, 1);
         }
 
         $placeholder = implode(', ', $primaryKeysValues);
-        $expectedQuery = 'delete from users where ' . $primaryKeyColumnName . ' in (' . $placeholder . ')';
+        $expectedQuery = 'delete from users where ' . $p_key_name . ' in (' . $placeholder . ')';
 
         $this->assertEquals($expectedQuery, $query);
     }
 
     public function testSettingEntityClassName(): void
     {
-        $deleteQueryBuilder = $this->sqlite_database_wrapper
-            ->deleteQuery('users', MockEntity::class);
-
-        $class_name = new ReflectionClass($deleteQueryBuilder)
+        $class_name = new ReflectionClass($this->sqlite_delete_query_builder)
             ->getProperty('entity_class')
-            ->getValue($deleteQueryBuilder);
+            ->getValue($this->sqlite_delete_query_builder);
 
         $this->assertEquals($class_name, MockEntity::class);
     }
