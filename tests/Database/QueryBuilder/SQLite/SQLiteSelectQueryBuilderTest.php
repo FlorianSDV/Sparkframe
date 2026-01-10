@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Sparkframe\Tests\Database\QueryBuilder\SQLite;
 
+use Exception;
 use Pdo\Sqlite;
 use PHPUnit\Framework\TestCase;
 use Sparkframe\Database\QueryBuilder\SQLite\SQLiteSelectQueryBuilder;
@@ -452,5 +453,12 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         
         $this->sqlite_select_query_builder->select(UserMockEntity::ID, UserMockEntity::NAME);
         $this->assertFalse($this->sqlite_select_query_builder->readyForSubQuery());
+    }
+
+    public function testOrQueryFails(): void {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Cannot use or without where conditions!');
+
+        $this->sqlite_select_query_builder->or([UserMockEntity::ID => 1]);
     }
 }
