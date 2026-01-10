@@ -20,6 +20,22 @@ class SQLiteSelectQueryBuilderTest extends TestCase
             ->selectQuery('users', MockEntity::class);    
     }
 
+    /** 
+     * Replace the placeholders in the query with actual values.
+     * @return string The query with the values replaced.
+    */
+    private function getQueryWithValues(): string 
+    {
+        $query = $this->sqlite_select_query_builder->getQuery();
+        $prepared_statements = $this->sqlite_select_query_builder->getPreparedStatements();
+
+        foreach ($prepared_statements as $index => $value) {
+            $query = str_replace($index, (string) $value, $query);
+        }
+
+        return $query;
+    }
+
     public function testSelectAll(): void
     {
         $expected_query = 'select * from users   ';
@@ -55,7 +71,7 @@ class SQLiteSelectQueryBuilderTest extends TestCase
 
         // Test with values
         $expected_query = 'select * from users where id =  1  ';
-        $query = $this->createQueryWithValues();
+        $query = $this->getQueryWithValues();
         
         $this->assertEquals($expected_query, $query);
     }
@@ -72,24 +88,8 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         
         // Test with values
         $expected_query = "select * from users where name in ('John', 'Jane', 'Jim')  ";
-        $query = $this->createQueryWithValues();
+        $query = $this->getQueryWithValues();
         
         $this->assertEquals($expected_query, $query);
-    }
-
-    /** 
-     * Replace the placeholders in the query with actual values.
-     * @return string The query with the values replaced.
-    */
-    private function createQueryWithValues(): string 
-    {
-        $query = $this->sqlite_select_query_builder->getQuery();
-        $prepared_statements = $this->sqlite_select_query_builder->getPreparedStatements();
-
-        foreach ($prepared_statements as $index => $value) {
-            $query = str_replace($index, (string) $value, $query);
-        }
-
-        return $query;
     }
 }
