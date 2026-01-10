@@ -332,4 +332,43 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         
         $this->assertEquals($expected_query, $query);
     }
+
+    public function testOrIn(): void
+    {
+        $this->sqlite_select_query_builder
+            ->where([UserMockEntity::ID . " = " => 1])
+            ->orIn([UserMockEntity::AGE => [20, 30]]);
+
+        // Test raw
+        $expected_query = 'select * from users where id =  :0 or age in (:1, :2) ';
+        $query = $this->sqlite_select_query_builder->getQuery();
+        
+        $this->assertEquals($expected_query, $query);
+
+        // Test with values
+        $expected_query = 'select * from users where id =  1 or age in (20, 30) ';
+        $query = $this->getQueryWithValues();
+        
+        $this->assertEquals($expected_query, $query);
+    }
+
+    public function testMultipleOrIn(): void
+    {
+        $this->sqlite_select_query_builder
+            ->where([UserMockEntity::ID . " = " => 1])
+            ->orIn([UserMockEntity::AGE => [20, 30]])
+            ->orIn([UserMockEntity::ID => [2, 3]]);
+
+        // Test raw
+        $expected_query = 'select * from users where id =  :0 or age in (:1, :2) or id in (:3, :4) ';
+        $query = $this->sqlite_select_query_builder->getQuery();
+        
+        $this->assertEquals($expected_query, $query);
+
+        // Test with values
+        $expected_query = 'select * from users where id =  1 or age in (20, 30) or id in (2, 3) ';
+        $query = $this->getQueryWithValues();
+        
+        $this->assertEquals($expected_query, $query);
+    }
 }
