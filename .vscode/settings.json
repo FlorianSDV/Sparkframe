@@ -1,0 +1,9 @@
+{
+    "editor.formatOnSave": true,
+
+    "php-cs-fixer.executablePath": "vendor/bin/php-cs-fixer",
+    "php-cs-fixer.onsave": true,
+
+    "phpcs.executablePath": "vendor/bin/phpcs",
+    "phpcs.standard": "PSR12",
+}
