@@ -31,7 +31,7 @@ return (new PhpCsFixer\Config())
             'statements' => ['return', 'throw', 'try', 'if', 'switch', 'for', 'foreach', 'while', 'do'],
         ],
         'method_argument_space' => ['on_multiline' => 'ensure_fully_multiline'],
-        'trailing_comma_in_multiline' => ['elements' => ['arrays', 'arguments', 'parameters']],
+        'trailing_comma_in_multiline' => ['elements' => ['arguments', 'parameters']],
 
         // Cleanup
         'no_empty_phpdoc' => true,
