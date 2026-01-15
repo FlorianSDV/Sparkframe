@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Sparkframe\Tests\Database\QueryBuilder\SQLite;
 
 use Pdo\Mysql;
-use PHPUnit\Framework\TestCase;
-use Sparkframe\Tests\Mocks\Entities\UserMockEntity;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use ReflectionMethod;
 use Sparkframe\Database\MySQLDatabaseWrapper;
 use Sparkframe\Database\QueryBuilder\MySQL\MySQLInsertQueryBuilder;
+use Sparkframe\Tests\Mocks\Entities\UserMockEntity;
 
 class MySQLInsertQueryBuilderTest extends TestCase
 {
@@ -45,7 +45,7 @@ class MySQLInsertQueryBuilderTest extends TestCase
         ];
     }
 
-    public function testInsertQuery()
+    public function testInsertQuery(): void
     {
         $columns = UserMockEntity::getColumnNames();
 
@@ -54,7 +54,7 @@ class MySQLInsertQueryBuilderTest extends TestCase
 
         $p_key_name = UserMockEntity::getPrimaryKeyColumnName();
         $expected_query = "insert into users ($p_key_name, name, email_address, age, phone_number) values (:$p_key_name, :name, :email_address, :age, :phone_number)";
-        
+
         $this->assertEquals($expected_query, $query);
     }
 

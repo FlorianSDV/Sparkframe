@@ -54,12 +54,12 @@ class MySQLDeleteQueryBuilderTest extends TestCase
 
         $p_key_name = UserMockEntity::getPrimaryKeyColumnName();
 
-        $query = new ReflectionMethod(MySQLDeleteQueryBuilder::class, 'getQuery') 
+        $query = new ReflectionMethod(MySQLDeleteQueryBuilder::class, 'getQuery')
             ->invoke($this->mysql_delete_query_builder, $p_key_name);
 
         $placeholder = str_repeat('?, ', count($mock_entities) - 1) . '?';
         $expected_query = 'delete from users where ' . $p_key_name . ' in (' . $placeholder . ')';
-        
+
         $this->assertEquals($expected_query, $query);
     }
 
@@ -67,13 +67,14 @@ class MySQLDeleteQueryBuilderTest extends TestCase
     public function testDeleteQueryWithValues(array $mock_entities): void
     {
         $p_key_name = UserMockEntity::getPrimaryKeyColumnName();
-    
+
         $primaryKeysValues = [];
+
         foreach ($mock_entities as $mock_entity) {
             $this->mysql_delete_query_builder->addEntity($mock_entity);
             $primaryKeysValues[] = (string)$mock_entity->$p_key_name;
         }
-        
+
         $query = new ReflectionMethod(MySQLDeleteQueryBuilder::class, 'getQuery')
             ->invoke($this->mysql_delete_query_builder, $p_key_name);
 

@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Sparkframe\Tests\Database\QueryBuilder\SQLite;
 
 use Pdo\Sqlite;
-use PHPUnit\Framework\TestCase;
-use Sparkframe\Database\SqliteDatabaseWrapper;
-use Sparkframe\Tests\Mocks\Entities\UserMockEntity;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use ReflectionMethod;
 use Sparkframe\Database\QueryBuilder\SQLite\SQLiteUpdateQueryBuilder;
+use Sparkframe\Database\SqliteDatabaseWrapper;
+use Sparkframe\Tests\Mocks\Entities\UserMockEntity;
 
 class SQLiteUpdateQueryBuilderTest extends TestCase
 {
@@ -45,7 +45,7 @@ class SQLiteUpdateQueryBuilderTest extends TestCase
         ];
     }
 
-    public function testUpdateQuery()
+    public function testUpdateQuery(): void
     {
         $p_key_name = UserMockEntity::getPrimaryKeyColumnName();
         $query = new ReflectionMethod(SQLiteUpdateQueryBuilder::class, 'getQuery')
@@ -56,7 +56,7 @@ class SQLiteUpdateQueryBuilderTest extends TestCase
     }
 
     #[DataProvider('mockEntityProvider')]
-    public function testUpdateQueryWithValues(array $mock_entities): void 
+    public function testUpdateQueryWithValues(array $mock_entities): void
     {
         $p_key_name = UserMockEntity::getPrimaryKeyColumnName();
         $base_query = new ReflectionMethod(SQLiteUpdateQueryBuilder::class, 'getQuery')

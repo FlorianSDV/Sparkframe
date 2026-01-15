@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Sparkframe\Tests\Database\QueryBuilder\SQLite;
 
 use Pdo\Sqlite;
-use PHPUnit\Framework\TestCase;
-use Sparkframe\Database\SqliteDatabaseWrapper;
-use Sparkframe\Tests\Mocks\Entities\UserMockEntity;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use ReflectionMethod;
 use Sparkframe\Database\QueryBuilder\SQLite\SQLiteInsertQueryBuilder;
+use Sparkframe\Database\SqliteDatabaseWrapper;
+use Sparkframe\Tests\Mocks\Entities\UserMockEntity;
 
 class SQLiteInsertQueryBuilderTest extends TestCase
 {
@@ -45,7 +45,7 @@ class SQLiteInsertQueryBuilderTest extends TestCase
         ];
     }
 
-    public function testInsertQuery()
+    public function testInsertQuery(): void
     {
         $columns = UserMockEntity::getColumnNames();
 

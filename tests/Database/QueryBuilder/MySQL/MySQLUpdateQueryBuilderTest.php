@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Sparkframe\Tests\Database\QueryBuilder\SQLite;
 
 use Pdo\Mysql;
-use PHPUnit\Framework\TestCase;
-use Sparkframe\Database\MySQLDatabaseWrapper;
-use Sparkframe\Tests\Mocks\Entities\UserMockEntity;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use ReflectionMethod;
+use Sparkframe\Database\MySQLDatabaseWrapper;
 use Sparkframe\Database\QueryBuilder\MySQL\MySQLUpdateQueryBuilder;
+use Sparkframe\Tests\Mocks\Entities\UserMockEntity;
 
 class MySQLUpdateQueryBuilderTest extends TestCase
 {
@@ -45,19 +45,19 @@ class MySQLUpdateQueryBuilderTest extends TestCase
         ];
     }
 
-    public function testUpdateQuery()
+    public function testUpdateQuery(): void
     {
         $p_key_name = UserMockEntity::getPrimaryKeyColumnName();
         $query = new ReflectionMethod(MySQLUpdateQueryBuilder::class, 'getQuery')
             ->invoke($this->mysql_update_query_builder, $p_key_name);
 
         $expected_query = "update users set $p_key_name = :$p_key_name, name = :name, email_address = :email_address, age = :age, phone_number = :phone_number where $p_key_name = :$p_key_name";
-        
+
         $this->assertEquals($expected_query, $query);
     }
 
     #[DataProvider('mockEntityProvider')]
-    public function testUpdateQueryWithValues(array $mock_entities): void 
+    public function testUpdateQueryWithValues(array $mock_entities): void
     {
         $p_key_name = UserMockEntity::getPrimaryKeyColumnName();
         $base_query = new ReflectionMethod(MySQLUpdateQueryBuilder::class, 'getQuery')
