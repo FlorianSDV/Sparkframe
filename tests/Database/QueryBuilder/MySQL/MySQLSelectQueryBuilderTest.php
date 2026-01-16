@@ -6,6 +6,7 @@ namespace Sparkframe\Tests\Database\QueryBuilder\SQLite;
 
 use Exception;
 use Pdo\Mysql;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Sparkframe\Database\MySQLDatabaseWrapper;
 use Sparkframe\Database\QueryBuilder\MySQL\MySQLSelectQueryBuilder;
@@ -63,11 +64,10 @@ class MySQLSelectQueryBuilderTest extends TestCase
 
     public function testLimit(): void
     {
+        $expected_query = 'select * from users    limit 10';
         $query = $this->mysql_select_query_builder
             ->limit(10)
             ->getQuery();
-
-        $expected_query = 'select * from users    limit 10';
 
         $this->assertEquals($expected_query, $query);
     }
@@ -385,11 +385,11 @@ class MySQLSelectQueryBuilderTest extends TestCase
 
     public function testClearWhere(): void
     {
-        $query = $this->mysql_select_query_builder
+        $expected_query = 'select * from users   ';
+        $this->mysql_select_query_builder
             ->where([UserMockEntity::ID . ' = ' => 1])
             ->clearWhere();
 
-        $expected_query = 'select * from users   ';
         $query = $this->mysql_select_query_builder->getQuery();
 
         $this->assertEquals($expected_query, $query);
@@ -397,39 +397,52 @@ class MySQLSelectQueryBuilderTest extends TestCase
 
     public function testClearOr(): void
     {
+        $expected_query = 'select * from users where id =  :0  ';
         $this->mysql_select_query_builder
             ->where([UserMockEntity::ID . ' = ' => 1])
             ->or([UserMockEntity::AGE . ' > ' => 20])
             ->clearOr();
 
-        // Test raw
-        $expected_query = 'select * from users where id =  :0  ';
         $query = $this->mysql_select_query_builder->getQuery();
 
         $this->assertEquals($expected_query, $query);
     }
 
-    public function testGetPreparedStatementIndex(): void
+    public static function getPreparedStatementIndexDataProvider(): array
+    {
+        return [
+            'single where' => [
+                'where_array' => [UserMockEntity::ID . ' = ' => 1],
+                'expected_index' => 1
+            ],
+            'two wheres' => [
+                'where_array' => [UserMockEntity::ID . ' = ' => 1, UserMockEntity::AGE . ' = ' => 30],
+                'expected_index' => 2
+            ],
+        ];
+    }
+
+    #[DataProvider('getPreparedStatementIndexDataProvider')]
+    public function testGetPreparedStatementIndex($where_array, $expected_index): void
     {
         $this->mysql_select_query_builder
-            ->where([UserMockEntity::ID . ' = ' => 1])
+            ->where($where_array)
             ->getQuery();
 
-        $this->assertEquals(1, $this->mysql_select_query_builder->getPreparedStatementIndex());
+        $this->assertEquals($expected_index, $this->mysql_select_query_builder->getPreparedStatementIndex());
     }
 
     public function testGetQueryWithDifferentIndex(): void
     {
         $index = 10;
+        $expected_index = $index + 1;
+        $expected_query = "select * from users where id =  :$index  ";
         $query = $this->mysql_select_query_builder
             ->where([UserMockEntity::ID . ' = ' => 1])
             ->getQuery($index);
 
-        $expected_query = "select * from users where id =  :$index  ";
-
         $this->assertEquals($expected_query, $query);
 
-        $expected_index = 11;
         $index = $this->mysql_select_query_builder->getPreparedStatementIndex();
 
         $this->assertEquals($expected_index, $index);
@@ -437,6 +450,7 @@ class MySQLSelectQueryBuilderTest extends TestCase
 
     public function testCleanUpp(): void
     {
+        $expected_query = 'select * from users   ';
         $this->mysql_select_query_builder
             ->where([UserMockEntity::ID . ' = ' => 1])
             ->whereIn(UserMockEntity::AGE, [20, 30])
@@ -444,7 +458,6 @@ class MySQLSelectQueryBuilderTest extends TestCase
             ->orIn([UserMockEntity::EMAIL_ADDRESS => ["'test@example.com'"]])
             ->cleanUp();
 
-        $expected_query = 'select * from users   ';
         $query = $this->mysql_select_query_builder->getQuery();
 
         $this->assertEquals($expected_query, $query);

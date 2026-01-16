@@ -6,6 +6,7 @@ namespace Sparkframe\Tests\Database\QueryBuilder\SQLite;
 
 use Exception;
 use Pdo\Sqlite;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Sparkframe\Database\QueryBuilder\SQLite\SQLiteSelectQueryBuilder;
 use Sparkframe\Database\SqliteDatabaseWrapper;
@@ -50,24 +51,22 @@ class SQLiteSelectQueryBuilderTest extends TestCase
     public function testSelect(): void
     {
         $expected_query = 'select id, name from users   ';
-
-        $this->sqlite_select_query_builder->select(
+        $query = $this->sqlite_select_query_builder->select(
             UserMockEntity::ID,
             UserMockEntity::NAME
-        );
-
-        $query = $this->sqlite_select_query_builder->getQuery();
+        )
+            ->getQuery();
 
         $this->assertEquals($expected_query, $query);
     }
 
     public function testLimit(): void
     {
+        $expected_query = 'select * from users    limit 10';
         $query = $this->sqlite_select_query_builder
             ->limit(10)
             ->getQuery();
 
-        $expected_query = 'select * from users    limit 10';
         $this->assertEquals($expected_query, $query);
     }
 
@@ -384,11 +383,11 @@ class SQLiteSelectQueryBuilderTest extends TestCase
 
     public function testClearWhere(): void
     {
+        $expected_query = 'select * from users   ';
         $query = $this->sqlite_select_query_builder
             ->where([UserMockEntity::ID . ' = ' => 1])
             ->clearWhere();
 
-        $expected_query = 'select * from users   ';
         $query = $this->sqlite_select_query_builder->getQuery();
 
         $this->assertEquals($expected_query, $query);
@@ -396,45 +395,61 @@ class SQLiteSelectQueryBuilderTest extends TestCase
 
     public function testClearOr(): void
     {
+        $expected_query = 'select * from users where id =  :0  ';
         $this->sqlite_select_query_builder
             ->where([UserMockEntity::ID . ' = ' => 1])
             ->or([UserMockEntity::AGE . ' > ' => 20])
             ->clearOr();
 
         // Test raw
-        $expected_query = 'select * from users where id =  :0  ';
         $query = $this->sqlite_select_query_builder->getQuery();
 
         $this->assertEquals($expected_query, $query);
     }
 
-    public function testGetPreparedStatementIndex(): void
+    public static function getPreparedStatementIndexDataProvider(): array
+    {
+        return [
+            'single where' => [
+                'where_array' => [UserMockEntity::ID . ' = ' => 1],
+                'expected_index' => 1
+            ],
+            'two wheres' => [
+                'where_array' => [UserMockEntity::ID . ' = ' => 1, UserMockEntity::AGE . ' = ' => 30],
+                'expected_index' => 2
+            ],
+        ];
+    }
+
+    #[DataProvider('getPreparedStatementIndexDataProvider')]
+    public function testGetPreparedStatementIndex($where_array, $expected_index): void
     {
         $this->sqlite_select_query_builder
-            ->where([UserMockEntity::ID . ' = ' => 1])
+            ->where($where_array)
             ->getQuery();
 
-        $this->assertEquals(1, $this->sqlite_select_query_builder->getPreparedStatementIndex());
+        $this->assertEquals($expected_index, $this->sqlite_select_query_builder->getPreparedStatementIndex());
     }
 
     public function testGetQueryWithDifferentIndex(): void
     {
         $index = 10;
+        $expected_query = "select * from users where id =  :$index  ";
+        $expected_index = $index + 1;
         $query = $this->sqlite_select_query_builder
             ->where([UserMockEntity::ID . ' = ' => 1])
             ->getQuery($index);
 
-        $expected_query = "select * from users where id =  :$index  ";
-
         $this->assertEquals($expected_query, $query);
 
-        $expected_index = 11;
         $index = $this->sqlite_select_query_builder->getPreparedStatementIndex();
+
         $this->assertEquals($expected_index, $index);
     }
 
     public function testCleanUpp(): void
     {
+        $expected_query = 'select * from users   ';
         $this->sqlite_select_query_builder
             ->where([UserMockEntity::ID . ' = ' => 1])
             ->whereIn(UserMockEntity::AGE, [20, 30])
@@ -442,7 +457,6 @@ class SQLiteSelectQueryBuilderTest extends TestCase
             ->orIn([UserMockEntity::EMAIL_ADDRESS => ["'test@example.com'"]])
             ->cleanUp();
 
-        $expected_query = 'select * from users   ';
         $query = $this->sqlite_select_query_builder->getQuery();
 
         $this->assertEquals($expected_query, $query);
