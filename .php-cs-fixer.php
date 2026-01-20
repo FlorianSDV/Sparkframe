@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 $finder = PhpCsFixer\Finder::create()
     ->in(__DIR__ . '/src')
     ->in(__DIR__ . '/tests');
@@ -35,7 +37,9 @@ return (new PhpCsFixer\Config())
         // Cleanup
         'no_empty_phpdoc' => true,
         'no_blank_lines_after_phpdoc' => true,
-        'no_extra_blank_lines' => true,
+        'no_extra_blank_lines' => [
+            'tokens' => ['curly_brace_block', 'extra'],
+        ],
         'no_trailing_whitespace' => true,
         'no_whitespace_in_blank_line' => true,
 
