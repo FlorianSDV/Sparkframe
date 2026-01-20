@@ -9,5 +9,4 @@ use Sparkframe\Database\QueryBuilder\Composition\QueryWithEntitiesInterface;
 
 interface DeleteQueryBuilderInterface extends QueryBuilderInterface, QueryWithEntitiesInterface
 {
-
 }

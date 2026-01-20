@@ -10,10 +10,10 @@ abstract class Entity
 {
     protected const array COLUMN_DESCRIPTIONS = [];
 
-
     public function __construct(array $columns_and_values = [])
     {
         $column_names = static::getColumnNames();
+
         foreach ($columns_and_values as $column => $property) {
             if (in_array($column, $column_names)) {
                 $this->$column = $property;
@@ -41,7 +41,8 @@ abstract class Entity
                 return $key;
             }
         }
-        throw new Exception("No primary key set");
+
+        throw new Exception('No primary key set');
     }
 
     /**
@@ -53,14 +54,13 @@ abstract class Entity
         $this->$primary = $id;
     }
 
-    /**
-     * @return array
-     */
     public function getValuesArray(): array
     {
         $values = [];
+
         foreach (static::getColumnNames() as $column) {
             $value = null;
+
             if (
                 property_exists($this, $column) &&
                 isset($this->{$column})
@@ -69,11 +69,12 @@ abstract class Entity
             }
             $values[$column] = $value;
         }
+
         return $values;
     }
 
-
-    public static function getPrimaryKeyDataType(): string {
+    public static function getPrimaryKeyDataType(): string
+    {
         return static::getColumnDataType(static::getPrimaryKeyColumnName());
     }
 
@@ -81,9 +82,11 @@ abstract class Entity
     {
         $column_descriptions = static::getColumnDescriptions();
         $column_description = $column_descriptions[$column];
+
         if (is_array($column_description)) {
             return $column_description[0];
         }
+
         return $column_description;
     }
 }

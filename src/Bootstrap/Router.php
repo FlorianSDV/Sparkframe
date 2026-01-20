@@ -23,6 +23,7 @@ class Router
 
         foreach (Globals::getControllers() as $controller) {
             $controller_routes = $controller->getRoutes();
+
             if ($controller_routes === []) {
                 continue;
             }
