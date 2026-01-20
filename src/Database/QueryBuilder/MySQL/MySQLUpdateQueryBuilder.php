@@ -6,29 +6,30 @@ namespace Sparkframe\Database\QueryBuilder\MySQL;
 
 use Exception;
 use PDO;
+use Sparkframe\Database\QueryBuilder\Builders\UpdateQueryBuilderInterface;
 use Sparkframe\Database\QueryBuilder\Traits\QueryBuilderTrait;
 use Sparkframe\Database\QueryBuilder\Traits\QueryWithEntitiesTrait;
-use Sparkframe\Database\QueryBuilder\Builders\UpdateQueryBuilderInterface;
 
 class MySQLUpdateQueryBuilder implements UpdateQueryBuilderInterface
 {
     use QueryBuilderTrait;
     use QueryWithEntitiesTrait;
 
-    public function __construct(protected PDO $PDO, protected string $target_table_name, protected string $entity_class) { }
-
+    public function __construct(protected PDO $PDO, protected string $target_table_name, protected string $entity_class)
+    {
+    }
 
     /**
      * @throws Exception
      */
-    function execute(): void
+    public function execute(): void
     {
         if (empty($this->entities)) {
-            throw new Exception("Tried to execute update query without any Entities set.");
+            throw new Exception('Tried to execute update query without any Entities set.');
         }
 
         if (empty($this->entity_class)) {
-            throw new Exception("Tried to execute update query without Entity class being set.");
+            throw new Exception('Tried to execute update query without Entity class being set.');
         }
 
         $primary_key_column_name = $this->entity_class::getPrimaryKeyColumnName();
@@ -47,11 +48,10 @@ class MySQLUpdateQueryBuilder implements UpdateQueryBuilderInterface
                 $stmt->execute($final_array);
             }
             $pdo->commit();
-
-
         } catch (Exception $e) {
             $pdo->rollBack();
-            throw new Exception("Failed to execute update query: " . $e->getMessage(), 0, $e);
+
+            throw new Exception('Failed to execute update query: ' . $e->getMessage(), 0, $e);
         }
 
         $this->cleanUp();
@@ -65,12 +65,14 @@ class MySQLUpdateQueryBuilder implements UpdateQueryBuilderInterface
         $columns = $this->entity_class::getColumnNames();
 
         $set_part = '';
+
         foreach ($columns as $key => $column) {
             $set_part .= "$column = :$column";
+
             if (array_key_last($columns) == $key) {
                 break;
             }
-            
+
             $set_part .= ', ';
         }
 
@@ -78,7 +80,7 @@ class MySQLUpdateQueryBuilder implements UpdateQueryBuilderInterface
 
         return "update $this->target_table_name set $set_part $where_part";
     }
-    
+
     public function cleanUp(): void
     {
         $this->clearEntities();

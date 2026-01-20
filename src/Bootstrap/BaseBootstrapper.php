@@ -20,7 +20,6 @@ abstract class BaseBootstrapper
 
     protected function __construct()
     {
-
     }
 
     protected function __clone()
@@ -30,9 +29,9 @@ abstract class BaseBootstrapper
     /**
      * @throws Exception
      */
-    public function __wakeup()
+    public function __wakeup(): void
     {
-        throw new Exception("Cannot unserialize singleton");
+        throw new Exception('Cannot unserialize singleton');
     }
 
     public static function getInstance(): BaseBootstrapper

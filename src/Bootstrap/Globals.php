@@ -24,7 +24,9 @@ class Globals
      */
     private static array $controllers = [];
 
-    private function __construct() {}
+    private function __construct()
+    {
+    }
 
     public static function getInstance(): Globals
     {
@@ -45,7 +47,9 @@ class Globals
         return self::$root_dir;
     }
 
-    protected function __clone() {}
+    protected function __clone()
+    {
+    }
 
     public function __wakeup(): void
     {
@@ -69,7 +73,7 @@ class Globals
                 throw new \RuntimeException("Class $fullClass not found. Composer autoloading correct ingesteld?");
             }
 
-            $controller = new $fullClass;
+            $controller = new $fullClass();
             // only allow controllers to be added.
             if (!($controller instanceof Controller)) {
                 continue;
@@ -93,7 +97,7 @@ class Globals
      */
     public static function getController(string $controllerName): Controller
     {
-        if (!isset(self::$controllers[$controllerName])){
+        if (!isset(self::$controllers[$controllerName])) {
             throw new Exception("Controller $controllerName not found.");
         }
 

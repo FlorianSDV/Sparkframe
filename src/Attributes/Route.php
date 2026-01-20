@@ -7,7 +7,7 @@ namespace Sparkframe\Attributes;
 use Attribute;
 use Sparkframe\Tools\RequestMethod;
 
-#[\Attribute(Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
+#[Attribute(Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
 class Route
 {
     public function __construct(private string $route, private RequestMethod $request_method)

@@ -6,6 +6,7 @@ namespace Sparkframe\Database;
 
 use Exception;
 use Pdo;
+
 class DatabaseWrapperFactory
 {
     /**
@@ -18,6 +19,7 @@ class DatabaseWrapperFactory
             $databaseInfo->getUser(),
             $databaseInfo->getPassword(),
         );
+
         switch ($pdo::class) {
             case Pdo\Sqlite::class:
                 return new SqliteDatabaseWrapper($pdo);

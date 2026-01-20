@@ -562,6 +562,5 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         $expected_sub_query_4_index = 13;
         $sub_query_4_index = $sub_query_4->getPreparedStatementIndex();
         $this->assertEquals($expected_sub_query_4_index, $sub_query_4_index);
-
     }
 }

@@ -10,7 +10,7 @@ class IncorrectSubquerySelectException extends Exception
 {
     public function __construct(string $query)
     {
-        $message = "Incorrect subquery. Make sure you select exactly one column! Query: " . $query;
+        $message = 'Incorrect subquery. Make sure you select exactly one column! Query: ' . $query;
         parent::__construct($message);
     }
 }

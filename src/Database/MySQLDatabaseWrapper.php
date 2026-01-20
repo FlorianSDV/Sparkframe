@@ -1,17 +1,20 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Sparkframe\Database;
 
 use PDO;
-use Sparkframe\Database\QueryBuilder\MySQL\MySQLSelectQueryBuilder;
-use Sparkframe\Database\QueryBuilder\MySQL\MySQLInsertQueryBuilder;
-use Sparkframe\Database\QueryBuilder\MySQL\MySQLUpdateQueryBuilder;
 use Sparkframe\Database\QueryBuilder\MySQL\MySQLDeleteQueryBuilder;
+use Sparkframe\Database\QueryBuilder\MySQL\MySQLInsertQueryBuilder;
+use Sparkframe\Database\QueryBuilder\MySQL\MySQLSelectQueryBuilder;
+use Sparkframe\Database\QueryBuilder\MySQL\MySQLUpdateQueryBuilder;
 
 readonly class MySQLDatabaseWrapper implements DatabaseWrapperInterface
 {
-    public function __construct(protected PDO $PDO) {}
+    public function __construct(protected PDO $PDO)
+    {
+    }
 
     public function getPDO(): PDO
     {
