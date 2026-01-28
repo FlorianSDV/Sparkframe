@@ -146,7 +146,9 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
 
         foreach ($this->where_in_conditions as &$where_in_condition) {
             if ($where_in_condition['values'] instanceof SQLiteSelectQueryBuilder) {
-                $where_array[] = $where_in_condition['column'] . ' in (' . $where_in_condition['values']->getQuery($this->prepared_statement_index) . ')';
+                $column = $where_in_condition['column'];
+                $subquery = $where_in_condition['values']->getQuery($this->prepared_statement_index);
+                $where_array[] = $column . ' in (' . $subquery . ')';
                 $this->prepared_statement_index = $where_in_condition['values']->getPreparedStatementIndex();
             } else {
                 $indexes = [];
@@ -179,7 +181,8 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
 
         foreach ($this->where_in_conditions as $where_in_condition) {
             if ($where_in_condition['values'] instanceof SQLiteSelectQueryBuilder) {
-                $prepared_statements = array_merge($prepared_statements, $where_in_condition['values']->getPreparedStatements());
+                $subquery_prepared_statements = $where_in_condition['values']->getPreparedStatements();
+                $prepared_statements = array_merge($prepared_statements, $subquery_prepared_statements);
             } else {
                 foreach ($where_in_condition['values'] as &$value) {
                     $parameter_name = ':' . $value['prepared_statement_index'];
@@ -299,7 +302,9 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
 
             foreach ($or_in_condition_array as &$or_in_condition) {
                 if ($or_in_condition['values'] instanceof SQLiteSelectQueryBuilder) {
-                    $temp_or_in_array[] = $or_in_condition['column'] . ' in (' . $or_in_condition['values']->getQuery($this->prepared_statement_index) . ')';
+                    $column = $or_in_condition['column'];
+                    $subquery = $or_in_condition['values']->getQuery($this->prepared_statement_index);
+                    $temp_or_in_array[] = $column . ' in (' . $subquery . ')';
                     $this->prepared_statement_index = $or_in_condition['values']->getPreparedStatementIndex();
                 } else {
                     $indexes = [];
@@ -337,7 +342,8 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
         foreach ($this->or_in_conditions as $or_in_condition_array) {
             foreach ($or_in_condition_array as $or_in_condition) {
                 if ($or_in_condition['values'] instanceof SQLiteSelectQueryBuilder) {
-                    $prepared_statements = array_merge($prepared_statements, $or_in_condition['values']->getPreparedStatements());
+                    $subquery_prepared_statements = $or_in_condition['values']->getPreparedStatements();
+                    $prepared_statements = array_merge($prepared_statements, $subquery_prepared_statements);
                 } else {
                     foreach ($or_in_condition['values'] as &$value) {
                         $parameter_name = ':' . $value['prepared_statement_index'];
