@@ -21,6 +21,7 @@ trait QueryWithEntitiesTrait
     public function addEntity(Entity $entity): self
     {
         $class_name = $entity::class;
+
         if ($this->entity_class !== $class_name) {
             throw new Exception("Entity class $class_name does not match the expected class {$this->entity_class}.");
         }

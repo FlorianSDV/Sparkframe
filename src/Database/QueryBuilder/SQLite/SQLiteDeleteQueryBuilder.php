@@ -15,23 +15,25 @@ class SQLiteDeleteQueryBuilder implements DeleteQueryBuilderInterface
     use QueryBuilderTrait;
     use QueryWithEntitiesTrait;
 
-    public function __construct(protected PDO $PDO, protected string $target_table_name, protected string $entity_class) { }
-    
-    public function execute()
+    public function __construct(protected PDO $PDO, protected string $target_table_name, protected string $entity_class)
+    {
+    }
+
+    public function execute(): void
     {
         if (empty($this->entities)) {
-            throw new Exception("Tried to execute update query without any Entities set.");
+            throw new Exception('Tried to execute update query without any Entities set.');
         }
 
         if (empty($this->entity_class)) {
-            throw new Exception("Tried to execute update query without Entity class being set.");
+            throw new Exception('Tried to execute update query without Entity class being set.');
         }
-        
+
         $primary_key_column_name = $this->entity_class::getPrimaryKeyColumnName();
         $query_string = $this->getQuery($primary_key_column_name);
-        
+
         $query = $this->PDO->prepare($query_string);
-        $all_primary_keys = array_map(fn($entity) => $entity->$primary_key_column_name, $this->entities);
+        $all_primary_keys = array_map(fn ($entity) => $entity->$primary_key_column_name, $this->entities);
         $query->execute($all_primary_keys);
         $this->cleanUp();
     }
@@ -46,7 +48,6 @@ class SQLiteDeleteQueryBuilder implements DeleteQueryBuilderInterface
 
         return $sql_string;
     }
-
 
     public function cleanUp(): void
     {

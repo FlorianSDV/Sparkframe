@@ -6,8 +6,8 @@ namespace Sparkframe\Database;
 
 use PDO;
 use Sparkframe\Database\QueryBuilder\Builders\DeleteQueryBuilderInterface;
-use Sparkframe\Database\QueryBuilder\Builders\SelectQueryBuilderInterface;
 use Sparkframe\Database\QueryBuilder\Builders\InsertQueryBuilderInterface;
+use Sparkframe\Database\QueryBuilder\Builders\SelectQueryBuilderInterface;
 use Sparkframe\Database\QueryBuilder\Builders\UpdateQueryBuilderInterface;
 
 /**
