@@ -17,7 +17,7 @@ class MethodRoute
     private array $variables = [];
 
     public function __construct(
-        string                  $uri,
+        string $uri,
         private readonly string $controller,
         private readonly string $method_name
     ) {

@@ -12,9 +12,13 @@ use Sparkframe\Entity\Entity;
 interface QueryWithEntitiesInterface
 {
     /**
-     * Adds an entity that will be inserted once the query is executed.
+     * Adds an entity to the query.
      */
-    public function addEntity(Entity $entity): InsertQueryBuilderInterface | UpdateQueryBuilderInterface | DeleteQueryBuilderInterface;
+    public function addEntity(Entity $entity): InsertQueryBuilderInterface |
+    UpdateQueryBuilderInterface |
+    DeleteQueryBuilderInterface;
 
-    public function clearEntities(): InsertQueryBuilderInterface | UpdateQueryBuilderInterface | DeleteQueryBuilderInterface;
+    public function clearEntities(): InsertQueryBuilderInterface |
+    UpdateQueryBuilderInterface |
+    DeleteQueryBuilderInterface;
 }
