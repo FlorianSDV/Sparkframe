@@ -13,6 +13,7 @@ use Sparkframe\Exceptions\IncorrectSubquerySelectException;
 class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
 {
     use QueryBuilderTrait;
+
     protected array $select_columns = ['*'];
     protected int|null $limit_amount = null;
     protected array $where_conditions = [];
@@ -21,7 +22,9 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
     protected array $or_in_conditions = [];
     protected int $prepared_statement_index = 0;
 
-    public function __construct(protected PDO $PDO, protected string $target_table_name, protected string $entity_class) { }
+    public function __construct(protected PDO $PDO, protected string $target_table_name, protected string $entity_class)
+    {
+    }
 
     public function whereIn(string $column_name, SelectQueryBuilderInterface|array $values): self
     {
@@ -43,6 +46,7 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
             throw new Exception('Cannot use or without where conditions!');
         }
         $conditions = [];
+
         foreach ($filter_criteria as $expression => $filter_criterion) {
             if (!is_string($expression)) {
                 throw new Exception('Expression must be a string!');
@@ -60,17 +64,20 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
     public function orIn(array $filter_criteria): SelectQueryBuilderInterface
     {
         $or_in = [];
+
         foreach ($filter_criteria as $column_name => $values) {
             $or_in[] = $this->addOrIn($column_name, $values);
         }
         $this->or_in_conditions[] = $or_in;
+
         return $this;
     }
 
     protected function addOrIn(string $column_name, SelectQueryBuilderInterface|array $values): array
     {
         if (is_array($values) && !empty($values)) {
-            $values = array_map(fn($value) => ['value' => $value], $values);
+            $values = array_map(fn ($value) => ['value' => $value], $values);
+
             return [
                 'column' => $column_name,
                 'values' => $values
@@ -81,6 +88,7 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
             if (!$values->readyForSubQuery()) {
                 throw new IncorrectSubquerySelectException($values->getQuery());
             }
+
             return [
                 'column' => $column_name,
                 'values' => $values
@@ -129,6 +137,7 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
 
         $where_array = [];
         $where_part = 'where ';
+
         foreach ($this->where_conditions as &$where_condition) {
             $where_array[] = $where_condition['expression'] . ' :' . $this->prepared_statement_index;
             $where_condition['prepared_statement_index'] = $this->prepared_statement_index;
@@ -141,6 +150,7 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
                 $this->prepared_statement_index = $where_in_condition['values']->getPreparedStatementIndex();
             } else {
                 $indexes = [];
+
                 foreach ($where_in_condition['values'] as &$value) {
                     $value['prepared_statement_index'] = $this->prepared_statement_index;
                     $indexes[] = $this->prepared_statement_index;
@@ -161,6 +171,7 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
         }
 
         $prepared_statements = [];
+
         foreach ($this->where_conditions as $where_condition) {
             $parameter_name = ':' . $where_condition['prepared_statement_index'];
             $prepared_statements[$parameter_name] = $where_condition['filter_criterion'];
@@ -199,7 +210,7 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
     {
         $this->prepared_statement_index = $prepared_statement_index;
         $query_string = $this->getSelectPart();
-        $query_string .= 'from '.$this->getTargetTable().' ';
+        $query_string .= 'from ' . $this->getTargetTable() . ' ';
         $query_string .= $this->getPreparedWherePart() . ' ';
         $query_string .= $this->getPreparedOrPart() . ' ';
         $query_string .= $this->getLimitPart();
@@ -210,7 +221,6 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
     /**
      * Generates the select part string of the query.
      * DOES NOT PREVENT SQL INJECTION! ONLY USE YOUR OWN VALUES!
-     * @return string
      */
     public function getSelectPart(): string
     {
@@ -220,10 +230,10 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
     /**
      * @throws Exception
      */
-    function execute(): array
+    public function execute(): array
     {
         if (empty($this->entity_class)) {
-            throw new Exception("Tried to execute select query without Entity class being set.");
+            throw new Exception('Tried to execute select query without Entity class being set.');
         }
 
         $query_string = $this->getQuery();
@@ -235,22 +245,20 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
 
         $hydrated_result = [];
         $entity_class = $this->entity_class;
+
         foreach ($result as $row) {
             $hydrated_result[] = new $entity_class($row);
         }
 
-
         $this->cleanUp();
+
         return $hydrated_result;
     }
 
-    /**
-     * @param int $limit_amount
-     * @return SQLiteSelectQueryBuilder
-     */
     public function limit(int $limit_amount): SQLiteSelectQueryBuilder
     {
         $this->limit_amount = $limit_amount;
+
         return $this;
     }
 
@@ -263,19 +271,21 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
         return " limit $this->limit_amount";
     }
 
-
     protected function getPreparedOrPart(): string
     {
         $empty_where_part = count($this->where_conditions) == 0 && count($this->where_in_conditions) == 0;
         $empty_or_part = count($this->or_conditions) == 0 && count($this->or_in_conditions) == 0;
+
         if ($empty_where_part || $empty_or_part) {
             return '';
         }
 
         $or_array = [];
         $or_part = 'or ';
+
         foreach ($this->or_conditions as &$or_condition_array) {
             $temp_or_array = [];
+
             foreach ($or_condition_array as &$or_condition) {
                 $temp_or_array[] = $or_condition['expression'] . ' :' . $this->prepared_statement_index;
                 $or_condition['prepared_statement_index'] = $this->prepared_statement_index;
@@ -283,14 +293,17 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
             }
             $or_array[] = implode(' and ', $temp_or_array);
         }
+
         foreach ($this->or_in_conditions as &$or_in_condition_array) {
             $temp_or_in_array = [];
+
             foreach ($or_in_condition_array as &$or_in_condition) {
                 if ($or_in_condition['values'] instanceof SQLiteSelectQueryBuilder) {
                     $temp_or_in_array[] = $or_in_condition['column'] . ' in (' . $or_in_condition['values']->getQuery($this->prepared_statement_index) . ')';
                     $this->prepared_statement_index = $or_in_condition['values']->getPreparedStatementIndex();
                 } else {
                     $indexes = [];
+
                     foreach ($or_in_condition['values'] as &$value) {
                         $value['prepared_statement_index'] = $this->prepared_statement_index;
                         $indexes[] = $this->prepared_statement_index;
@@ -303,6 +316,7 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
         }
 
         $or_part .= implode(' or ', $or_array);
+
         return $or_part;
     }
 
@@ -312,6 +326,7 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
             return [];
         }
         $prepared_statements = [];
+
         foreach ($this->or_conditions as $or_condition_array) {
             foreach ($or_condition_array as $or_condition) {
                 $parameter_name = ':' . $or_condition['prepared_statement_index'];
@@ -339,6 +354,7 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
     {
         $prepared_where_statements = $this->getPreparedWherePartStatements();
         $prepared_or_statements = $this->getPreparedOrPartStatements();
+
         return array_merge($prepared_where_statements, $prepared_or_statements);
     }
 
@@ -358,7 +374,7 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
     protected function addWhereIn(string $column_name, SQLiteSelectQueryBuilder|array $values): void
     {
         if (is_array($values) && !empty($values)) {
-            $values = array_map(fn($value) => ['value' => $value], $values);
+            $values = array_map(fn ($value) => ['value' => $value], $values);
             $this->where_in_conditions[] = [
                 'column' => $column_name,
                 'values' => $values
