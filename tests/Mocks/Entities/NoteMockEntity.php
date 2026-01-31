@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Sparkframe\Tests\Mocks\Entities;
 
+use Sparkframe\Attributes\Column;
+use Sparkframe\Attributes\Primary;
 use Sparkframe\Entity\Entity;
 
 class NoteMockEntity extends Entity
@@ -12,13 +14,13 @@ class NoteMockEntity extends Entity
     public const string TITLE = 'title';
     public const string CONTENT = 'content';
     public const string USER_ID = 'user_id';
+
+    #[Primary]
     public int $id;
+    #[Column]
     public string $title;
+    #[Column]
     public string $content;
+    #[Column]
     public int $user_id;
-    protected const array COLUMN_DESCRIPTIONS = [
-        'id' => ['integer', 'primary'],
-        'title' => ['string'],
-        'content' => ['text']
-    ];
 }
