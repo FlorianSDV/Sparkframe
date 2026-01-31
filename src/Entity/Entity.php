@@ -5,30 +5,56 @@ declare(strict_types=1);
 namespace Sparkframe\Entity;
 
 use Exception;
+use ReflectionAttribute;
+use ReflectionClass;
+use ReflectionProperty;
+use Sparkframe\Attributes\Column;
+use Sparkframe\Attributes\Primary;
 
 abstract class Entity
 {
-    protected const array COLUMN_DESCRIPTIONS = [];
-
     public function __construct(array $columns_and_values = [])
     {
         $column_names = static::getColumnNames();
 
-        foreach ($columns_and_values as $column => $property) {
+        foreach ($columns_and_values as $column => $value) {
             if (in_array($column, $column_names)) {
-                $this->$column = $property;
+                $this->$column = $value;
             }
         }
     }
 
     public static function getColumnNames(): array
     {
-        return array_keys(static::getColumnDescriptions());
+        $reflections = static::getColumnReflections();
+        return array_map(
+            fn ($column_reflection) => $column_reflection->getName(),
+            $reflections
+        );
     }
 
-    public static function getColumnDescriptions(): array
+    /**
+     * @param Column::class|Primary::class $type
+     * @return ReflectionProperty[]
+     */
+    protected static function getColumnReflections(string $type = Column::class): array
     {
-        return static::COLUMN_DESCRIPTIONS;
+        if ($type !== Column::class && $type !== Primary::class) {
+            throw new \InvalidArgumentException(
+                'Argument $type must be Column::class or Primary::class'
+            );
+        }
+
+        $columns = [];
+        $properties = new ReflectionClass(static::class)->getProperties();
+
+        foreach ($properties as $property) {
+            if ($property->getAttributes($type, ReflectionAttribute::IS_INSTANCEOF)) {
+                $columns[] = $property;
+            }
+        }
+
+        return $columns;
     }
 
     /**
@@ -36,13 +62,12 @@ abstract class Entity
      */
     public static function getPrimaryKeyColumnName(): string
     {
-        foreach (static::getColumnDescriptions() as $key => $column) {
-            if (is_array($column) && in_array('primary', $column)) {
-                return $key;
-            }
+        $primary_key_column_reflections = static::getColumnReflections(Primary::class);
+        if (!$primary_key_column_reflections) {
+            throw new Exception('No primary key set');
         }
 
-        throw new Exception('No primary key set');
+        return $primary_key_column_reflections[0]->getName();
     }
 
     /**
@@ -58,16 +83,16 @@ abstract class Entity
     {
         $values = [];
 
-        foreach (static::getColumnNames() as $column) {
+        foreach (static::getColumnNames() as $column_name) {
             $value = null;
 
             if (
-                property_exists($this, $column) &&
-                isset($this->{$column})
+                property_exists($this, $column_name) &&
+                isset($this->{$column_name})
             ) {
-                $value = $this->$column;
+                $value = $this->$column_name;
             }
-            $values[$column] = $value;
+            $values[$column_name] = $value;
         }
 
         return $values;
@@ -75,18 +100,27 @@ abstract class Entity
 
     public static function getPrimaryKeyDataType(): string
     {
-        return static::getColumnDataType(static::getPrimaryKeyColumnName());
+        return static::getColumnReflections(Primary::class)[0]
+            ->getType()
+            ->getName();
     }
 
-    public static function getColumnDataType(string $column): string
+    /**
+     * @throws Exception
+     */
+    public static function getColumnDataType(string $column_name): string
     {
-        $column_descriptions = static::getColumnDescriptions();
-        $column_description = $column_descriptions[$column];
+        $column_reflections = static::getColumnReflections();
+        $column = array_find(
+            $column_reflections,
+            fn ($column_reflection) =>
+            $column_reflection->getName() == $column_name
+        );
 
-        if (is_array($column_description)) {
-            return $column_description[0];
+        if (!$column) {
+            throw new Exception('Column: ' . $column_name . ' does not exist!');
         }
 
-        return $column_description;
+        return $column->getType()->getName();
     }
 }
