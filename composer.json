@@ -7,17 +7,18 @@
     "autoload": {
         "psr-4": {
             "Sparkframe\\": "src/"
-        }
+        },
+        "files": [
+            "src/Functions/SessionFunctions.php",
+            "src/Functions/ViewFunctions.php",
+            "src/Tools/Constants.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
             "Sparkframe\\Tests\\": "tests/"
         }
     },
-    "files": [
-        "src/Functions/SessionFunctions.php",
-        "src/Functions/ViewFunctions.php"
-    ],
     "authors": [
         {
             "name": "FlorianSDV",
