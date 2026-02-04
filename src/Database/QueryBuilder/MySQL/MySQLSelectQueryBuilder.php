@@ -78,15 +78,9 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         return $this;
     }
 
-    public function orIn(array $filter_criteria): SelectQueryBuilderInterface
+    public function orIn(string $column_name, SelectQueryBuilderInterface|array $values): SelectQueryBuilderInterface
     {
-        $or_in = [];
-
-        foreach ($filter_criteria as $column_name => $values) {
-            $or_in[] = $this->addOrIn($column_name, $values);
-        }
-
-        $this->or_in_conditions[] = $or_in;
+        $this->or_in_conditions[] = [$this->addOrIn($column_name, $values)];
 
         return $this;
     }

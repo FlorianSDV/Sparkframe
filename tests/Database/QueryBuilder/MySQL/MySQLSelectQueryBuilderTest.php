@@ -350,7 +350,7 @@ class MySQLSelectQueryBuilderTest extends TestCase
     {
         $this->mysql_select_query_builder
             ->where([UserMockEntity::ID . ' = ' => 1])
-            ->orIn([UserMockEntity::AGE => [20, 30]]);
+            ->orIn(UserMockEntity::AGE, [20, 30]);
 
         // Test raw
         $expected_query = 'select * from users where id =  :0 or age in (:1, :2) ';
@@ -369,8 +369,8 @@ class MySQLSelectQueryBuilderTest extends TestCase
     {
         $this->mysql_select_query_builder
             ->where([UserMockEntity::ID . ' = ' => 1])
-            ->orIn([UserMockEntity::AGE => [20, 30]])
-            ->orIn([UserMockEntity::ID => [2, 3]]);
+            ->orIn(UserMockEntity::AGE, [20, 30])
+            ->orIn(UserMockEntity::ID, [2, 3]);
 
         // Test raw
         $expected_query = 'select * from users where id =  :0 or age in (:1, :2) or id in (:3, :4) ';
@@ -394,7 +394,7 @@ class MySQLSelectQueryBuilderTest extends TestCase
 
         $this->mysql_select_query_builder
             ->where([UserMockEntity::ID . ' = ' => 1])
-            ->orIn([UserMockEntity::AGE => [20, 30]]);
+            ->orIn(UserMockEntity::AGE, [20, 30]);
 
         $expected_or_in_conditions = [[[
             'column' => UserMockEntity::AGE,
@@ -446,6 +446,28 @@ class MySQLSelectQueryBuilderTest extends TestCase
         );
 
         $this->assertEquals($expected_array_with_subquery, $actual_array_with_subquery);
+    }
+
+    public function testOrInWithSubquery(): void
+    {
+        $sub_query = $this->mysql_database_wrapper->selectQuery('notes', NoteMockEntity::class)
+            ->select(NoteMockEntity::USER_ID)
+            ->where([NoteMockEntity::TITLE . ' = ' => "'Groceries'"]);
+        $this->mysql_select_query_builder
+            ->where([UserMockEntity::ID . ' = ' => 1])
+            ->orIn(UserMockEntity::ID, $sub_query);
+
+        // Test raw
+        $expected_query = 'select * from users where id =  :0 or id in (select user_id from notes where title =  :1  ) ';
+        $query = $this->mysql_select_query_builder->getQuery();
+
+        $this->assertEquals($expected_query, $query);
+
+        // Test with values
+        $expected_query = 'select * from users where id =  1 or id in (select user_id from notes where title =  \'Groceries\'  ) ';
+        $query = $this->getQueryWithValues();
+
+        $this->assertEquals($expected_query, $query);
     }
 
     public function testClearWhere(): void
@@ -520,7 +542,7 @@ class MySQLSelectQueryBuilderTest extends TestCase
             ->where([UserMockEntity::ID . ' = ' => 1])
             ->whereIn(UserMockEntity::AGE, [20, 30])
             ->or([UserMockEntity::AGE . ' > ' => 20])
-            ->orIn([UserMockEntity::EMAIL_ADDRESS => ["'test@example.com'"]])
+            ->orIn(UserMockEntity::EMAIL_ADDRESS, ["'test@example.com'"])
             ->cleanUp();
 
         $query = $this->mysql_select_query_builder->getQuery();
@@ -594,8 +616,8 @@ class MySQLSelectQueryBuilderTest extends TestCase
                 UserMockEntity::AGE . ' > ' => 30,
                 UserMockEntity::EMAIL_ADDRESS => "'example_2@test.com'"
             ])
-            ->orIn([UserMockEntity::AGE => [20, 30]])
-            ->orIn([UserMockEntity::ID => [2, 3]])
+            ->orIn(UserMockEntity::AGE, [20, 30])
+            ->orIn(UserMockEntity::ID, [2, 3])
             ->limit(1)
             ->getQuery();
 
