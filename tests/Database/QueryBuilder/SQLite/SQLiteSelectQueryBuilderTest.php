@@ -348,7 +348,7 @@ class SQLiteSelectQueryBuilderTest extends TestCase
     {
         $this->sqlite_select_query_builder
             ->where([UserMockEntity::ID . ' = ' => 1])
-            ->orIn([UserMockEntity::AGE => [20, 30]]);
+            ->orIn(UserMockEntity::AGE, [20, 30]);
 
         // Test raw
         $expected_query = 'select * from users where id =  :0 or age in (:1, :2) ';
@@ -367,8 +367,8 @@ class SQLiteSelectQueryBuilderTest extends TestCase
     {
         $this->sqlite_select_query_builder
             ->where([UserMockEntity::ID . ' = ' => 1])
-            ->orIn([UserMockEntity::AGE => [20, 30]])
-            ->orIn([UserMockEntity::ID => [2, 3]]);
+            ->orIn(UserMockEntity::AGE, [20, 30])
+            ->orIn(UserMockEntity::ID, [2, 3]);
 
         // Test raw
         $expected_query = 'select * from users where id =  :0 or age in (:1, :2) or id in (:3, :4) ';
@@ -392,7 +392,7 @@ class SQLiteSelectQueryBuilderTest extends TestCase
 
         $this->sqlite_select_query_builder
             ->where([UserMockEntity::ID . ' = ' => 1])
-            ->orIn([UserMockEntity::AGE => [20, 30]]);
+            ->orIn(UserMockEntity::AGE, [20, 30]);
 
         $expected_or_in_conditions = [[[
             'column' => UserMockEntity::AGE,
@@ -498,6 +498,28 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         $this->assertEquals($expected_where_in_conditions_with_subquery, $where_in_conditions);
     }
 
+    public function testOrInWithSubquery(): void
+    {
+        $sub_query = $this->sqlite_database_wrapper->selectQuery('notes', NoteMockEntity::class)
+            ->select(NoteMockEntity::USER_ID)
+            ->where([NoteMockEntity::TITLE . ' = ' => "'Groceries'"]);
+        $this->sqlite_select_query_builder
+            ->where([UserMockEntity::ID . ' = ' => 1])
+            ->orIn(UserMockEntity::ID, $sub_query);
+
+        // Test raw
+        $expected_query = 'select * from users where id =  :0 or id in (select user_id from notes where title =  :1  ) ';
+        $query = $this->sqlite_select_query_builder->getQuery();
+
+        $this->assertEquals($expected_query, $query);
+
+        // Test with values
+        $expected_query = 'select * from users where id =  1 or id in (select user_id from notes where title =  \'Groceries\'  ) ';
+        $query = $this->getQueryWithValues();
+
+        $this->assertEquals($expected_query, $query);
+    }
+
     public function testClearWhere(): void
     {
         $expected_query = 'select * from users   ';
@@ -571,7 +593,7 @@ class SQLiteSelectQueryBuilderTest extends TestCase
             ->where([UserMockEntity::ID . ' = ' => 1])
             ->whereIn(UserMockEntity::AGE, [20, 30])
             ->or([UserMockEntity::AGE . ' > ' => 20])
-            ->orIn([UserMockEntity::EMAIL_ADDRESS => ["'test@example.com'"]])
+            ->orIn(UserMockEntity::EMAIL_ADDRESS, ["'test@example.com'"])
             ->cleanUp();
 
         $query = $this->sqlite_select_query_builder->getQuery();
@@ -603,6 +625,8 @@ class SQLiteSelectQueryBuilderTest extends TestCase
 
     public function testAllOptions(): void
     {
+        //todo: orin met subquery
+        //todo: orNotIn met subquery en zonder subquery
         $sub_query_1 = $this->sqlite_database_wrapper->selectQuery('notes', NoteMockEntity::class)
             ->select(NoteMockEntity::USER_ID)
             ->where([NoteMockEntity::TITLE . ' = ' => "'Groceries'"]);
@@ -645,8 +669,8 @@ class SQLiteSelectQueryBuilderTest extends TestCase
                 UserMockEntity::AGE . ' > ' => 30,
                 UserMockEntity::EMAIL_ADDRESS => "'example_2@test.com'"
             ])
-            ->orIn([UserMockEntity::AGE => [20, 30]])
-            ->orIn([UserMockEntity::ID => [2, 3]])
+            ->orIn(UserMockEntity::AGE, [20, 30])
+            ->orIn(UserMockEntity::ID, [2, 3])
             ->limit(1)
             ->getQuery();
 
