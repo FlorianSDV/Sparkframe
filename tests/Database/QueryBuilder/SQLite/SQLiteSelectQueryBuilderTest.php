@@ -406,50 +406,48 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         $this->assertEquals($expected_query, $query);
     }
 
-    public function testAddOrInWithArray(): void
+    public static function addOrInDataProvider(): array
     {
-        $expected_array = [[
-            'column' => UserMockEntity::AGE,
-             'values' => [
-                ['value' => 20],
-                ['value' => 30]
+        $sub_query = new SqliteDatabaseWrapper(static::createStub(Sqlite::class))
+            ->selectQuery('users', UserMockEntity::class)
+            ->select(UserMockEntity::ID)
+            ->where([UserMockEntity::AGE . ' > ' => 20]);
+        return [
+            'With array' => [
+                'column_name' => UserMockEntity::AGE,
+                'values' => [20, 30],
+                'expected_array' => [[
+                    'column' => UserMockEntity::AGE,
+                     'values' => [
+                        ['value' => 20],
+                        ['value' => 30]
+                    ]
+                ]]
+            ],
+            'With subquery' => [
+                'column_name' => UserMockEntity::AGE,
+                'values' => $sub_query,
+                'expected_array' => [[
+                    'column' => UserMockEntity::AGE,
+                     'values' => $sub_query
+                ]]
             ]
-        ]];
+        ];
+    }
 
+    #[DataProvider('addOrInDataProvider')]
+    public function testAddOrIn($column_name, $values, $expected_array): void
+    {
         $this->addOrInMethodReflection->invoke(
             $this->sqlite_select_query_builder,
-            column_name: UserMockEntity::AGE,
-            values: [20, 30]
+            column_name: $column_name,
+            values: $values
         );
 
         $actual_or_in_conditions = $this->orInConditionsReflection->getValue(
             $this->sqlite_select_query_builder
         );
         $this->assertEquals($expected_array, $actual_or_in_conditions);
-    }
-
-    public function testAddOrInWithSubquery(): void
-    {
-        $sub_query = $this->sqlite_database_wrapper->selectQuery('users', UserMockEntity::class)
-            ->select(UserMockEntity::ID)
-            ->where([UserMockEntity::AGE . ' > ' => 20]);
-
-        $expected_array_with_subquery  = [[
-            'column' => UserMockEntity::AGE,
-             'values' => $sub_query
-        ]];
-
-        $this->addOrInMethodReflection->invoke(
-            $this->sqlite_select_query_builder,
-            column_name: UserMockEntity::AGE,
-            values: $sub_query
-        );
-
-        $actual_or_in_conditions = $this->orInConditionsReflection->getValue(
-            $this->sqlite_select_query_builder
-        );
-
-        $this->assertEquals($expected_array_with_subquery, $actual_or_in_conditions);
     }
 
     public function testAddWhereInWithArray(): void
