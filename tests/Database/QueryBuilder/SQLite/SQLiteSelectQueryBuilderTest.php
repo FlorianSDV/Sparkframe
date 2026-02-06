@@ -383,48 +383,34 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         $this->assertEquals($expected_query, $query);
     }
 
-    public function testOrInQueryState(): void
+    public function testAddOrIn(): void
     {
+        // Reflections
         $or_in_conditions_reflection = new ReflectionProperty(
             $this->sqlite_select_query_builder,
             'or_in_conditions'
         );
 
-        $this->sqlite_select_query_builder
-            ->where([UserMockEntity::ID . ' = ' => 1])
-            ->orIn(UserMockEntity::AGE, [20, 30]);
-
-        $expected_or_in_conditions = [[[
-            'column' => UserMockEntity::AGE,
-            'values' => [
-                ['value' => 20],
-                ['value' => 30]
-            ]
-        ]]];
-        $actual_or_in_conditions = $or_in_conditions_reflection->getValue(
-            $this->sqlite_select_query_builder
-        );
-
-        $this->assertEquals($expected_or_in_conditions, $actual_or_in_conditions);
-    }
-
-    public function testAddOrIn(): void
-    {
         $addOrInMethodReflection = new ReflectionMethod($this->sqlite_select_query_builder, 'addOrIn');
-        $actual_array = $addOrInMethodReflection->invoke(
-            $this->sqlite_select_query_builder,
-            column_name: UserMockEntity::AGE,
-            values: [20, 30]
-        );
 
-        $expected_array = [
+        $expected_array = [[
             'column' => UserMockEntity::AGE,
              'values' => [
                 ['value' => 20],
                 ['value' => 30]
             ]
-        ];
-        $this->assertEquals($expected_array, $actual_array);
+        ]];
+
+        $addOrInMethodReflection->invoke(
+            $this->sqlite_select_query_builder,
+            column_name: UserMockEntity::AGE,
+            values: [20, 30]
+        );
+
+        $actual_or_in_conditions = $or_in_conditions_reflection->getValue(
+            $this->sqlite_select_query_builder
+        );
+        $this->assertEquals($expected_array, $actual_or_in_conditions);
 
         $this->sqlite_select_query_builder->cleanUp();
 
@@ -432,18 +418,22 @@ class SQLiteSelectQueryBuilderTest extends TestCase
             ->select(UserMockEntity::ID)
             ->where([UserMockEntity::AGE . ' > ' => 20]);
 
-        $expected_array_with_subquery  = [
+        $expected_array_with_subquery  = [[
             'column' => UserMockEntity::AGE,
              'values' => $sub_query
-        ];
+        ]];
 
-        $actual_array_with_subquery = $addOrInMethodReflection->invoke(
+        $addOrInMethodReflection->invoke(
             $this->sqlite_select_query_builder,
             column_name: UserMockEntity::AGE,
             values: $sub_query
         );
 
-        $this->assertEquals($expected_array_with_subquery, $actual_array_with_subquery);
+        $actual_or_in_conditions = $or_in_conditions_reflection->getValue(
+            $this->sqlite_select_query_builder
+        );
+
+        $this->assertEquals($expected_array_with_subquery, $actual_or_in_conditions);
     }
 
     public function testAddWhereIn(): void
