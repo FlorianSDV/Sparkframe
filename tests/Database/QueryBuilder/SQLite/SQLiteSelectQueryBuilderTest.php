@@ -452,7 +452,7 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         $this->assertEquals($expected_array_with_subquery, $actual_or_in_conditions);
     }
 
-    public function testAddWhereIn(): void
+    public function testAddWhereInWithArray(): void
     {
         $this->addWhereInMethodReflection->invoke(
             $this->sqlite_select_query_builder,
@@ -471,9 +471,10 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         $where_in_conditions = $this->whereInConditionsReflection->getValue($this->sqlite_select_query_builder);
 
         $this->assertEquals($expected_where_in_conditions, $where_in_conditions);
+    }
 
-        $this->sqlite_select_query_builder->cleanUp();
-
+    public function testAddWhereInWithSubquery(): void
+    {
         $sub_query = $this->sqlite_database_wrapper->selectQuery('users', UserMockEntity::class)
             ->select(UserMockEntity::ID)
             ->where([UserMockEntity::AGE . ' > ' => 20]);
