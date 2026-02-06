@@ -20,7 +20,9 @@ class MySQLSelectQueryBuilderTest extends TestCase
     private MySQLSelectQueryBuilder $mysql_select_query_builder;
     private MySQLDatabaseWrapper $mysql_database_wrapper;
     private ReflectionMethod $addOrInMethodReflection;
+    private ReflectionMethod $addWhereInMethodReflection;
     private ReflectionProperty $orInConditionsReflection;
+    private ReflectionProperty $whereInConditionsReflection;
 
     public function setUp(): void
     {
@@ -31,9 +33,20 @@ class MySQLSelectQueryBuilderTest extends TestCase
             $this->mysql_select_query_builder,
             'addOrIn'
         );
+        $this->addWhereInMethodReflection = new ReflectionMethod(
+            $this->mysql_select_query_builder,
+            'addWhereIn'
+        );
+
+
+
         $this->orInConditionsReflection = new ReflectionProperty(
             $this->mysql_select_query_builder,
             'or_in_conditions'
+        );
+        $this->whereInConditionsReflection = new ReflectionProperty(
+            $this->mysql_select_query_builder,
+            'where_in_conditions'
         );
     }
 
@@ -440,6 +453,51 @@ class MySQLSelectQueryBuilderTest extends TestCase
         $this->assertEquals($expected_array, $actual_or_in_conditions);
     }
 
+
+    public function testAddWhereInWithArray(): void
+    {
+        $this->addWhereInMethodReflection->invoke(
+            $this->mysql_select_query_builder,
+            column_name: UserMockEntity::AGE,
+            values: [20, 30]
+        );
+        $expected_where_in_conditions = [
+            [
+                'column' => UserMockEntity::AGE,
+                 'values' => [
+                    ['value' => 20],
+                    ['value' => 30]
+                ]
+            ]
+        ];
+        $where_in_conditions = $this->whereInConditionsReflection->getValue($this->mysql_select_query_builder);
+
+        $this->assertEquals($expected_where_in_conditions, $where_in_conditions);
+    }
+
+    public function testAddWhereInWithSubquery(): void
+    {
+        $sub_query = $this->mysql_database_wrapper->selectQuery('users', UserMockEntity::class)
+            ->select(UserMockEntity::ID)
+            ->where([UserMockEntity::AGE . ' > ' => 20]);
+
+        $expected_where_in_conditions_with_subquery = [[
+            'column' => UserMockEntity::AGE,
+            'values' => $sub_query
+        ]];
+
+        $this->addWhereInMethodReflection->invoke(
+            $this->mysql_select_query_builder,
+            column_name: UserMockEntity::AGE,
+            values: $sub_query
+        );
+
+        $where_in_conditions = $this->whereInConditionsReflection->getValue($this->mysql_select_query_builder);
+
+        $this->assertEquals($expected_where_in_conditions_with_subquery, $where_in_conditions);
+    }
+
+
     public function testOrInWithSubquery(): void
     {
         $sub_query = $this->mysql_database_wrapper->selectQuery('notes', NoteMockEntity::class)
@@ -653,5 +711,3 @@ class MySQLSelectQueryBuilderTest extends TestCase
         $this->assertEquals($expected_sub_query_5_index, $sub_query_5_index);
     }
 }
-// todo:
-// addOrIn opsplitsen
