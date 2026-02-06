@@ -19,11 +19,22 @@ class MySQLSelectQueryBuilderTest extends TestCase
 {
     private MySQLSelectQueryBuilder $mysql_select_query_builder;
     private MySQLDatabaseWrapper $mysql_database_wrapper;
+    private ReflectionMethod $addOrInMethodReflection;
+    private ReflectionProperty $orInConditionsReflection;
 
     public function setUp(): void
     {
         $this->mysql_database_wrapper = new MySQLDatabaseWrapper($this->createStub(Mysql::class));
         $this->mysql_select_query_builder = $this->mysql_database_wrapper->selectQuery('users', UserMockEntity::class);
+
+        $this->addOrInMethodReflection = new ReflectionMethod(
+            $this->mysql_select_query_builder,
+            'addOrIn'
+        );
+        $this->orInConditionsReflection = new ReflectionProperty(
+            $this->mysql_select_query_builder,
+            'or_in_conditions'
+        );
     }
 
     /**
@@ -385,22 +396,15 @@ class MySQLSelectQueryBuilderTest extends TestCase
         $this->assertEquals($expected_query, $query);
     }
 
-    public function testAddOrIn(): void
+    public function testAddOrInWithArray(): void
     {
-        // Reflections
-        $or_in_conditions_reflection = new ReflectionProperty(
-            $this->mysql_select_query_builder,
-            'or_in_conditions'
-        );
-        $addOrInMethodReflection = new ReflectionMethod($this->mysql_select_query_builder, 'addOrIn');
-
-        $addOrInMethodReflection->invoke(
+        $this->addOrInMethodReflection->invoke(
             $this->mysql_select_query_builder,
             column_name: UserMockEntity::AGE,
             values: [20, 30]
         );
 
-        $actual_or_in_conditions = $or_in_conditions_reflection->getValue(
+        $actual_or_in_conditions = $this->orInConditionsReflection->getValue(
             $this->mysql_select_query_builder
         );
 
@@ -412,9 +416,10 @@ class MySQLSelectQueryBuilderTest extends TestCase
             ]
         ]];
         $this->assertEquals($expected_array, $actual_or_in_conditions);
+    }
 
-        $this->mysql_select_query_builder->cleanUp();
-
+    public function testAddOrInWithSubquery(): void
+    {
         $sub_query = $this->mysql_database_wrapper->selectQuery('users', UserMockEntity::class)
             ->select(UserMockEntity::ID)
             ->where([UserMockEntity::AGE . ' > ' => 20]);
@@ -424,13 +429,13 @@ class MySQLSelectQueryBuilderTest extends TestCase
              'values' => $sub_query
         ]];
 
-        $addOrInMethodReflection->invoke(
+        $this->addOrInMethodReflection->invoke(
             $this->mysql_select_query_builder,
             column_name: UserMockEntity::AGE,
             values: $sub_query
         );
 
-        $actual_array_with_subquery = $or_in_conditions_reflection->getValue(
+        $actual_array_with_subquery = $this->orInConditionsReflection->getValue(
             $this->mysql_select_query_builder
         );
 
