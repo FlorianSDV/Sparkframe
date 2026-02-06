@@ -707,5 +707,3 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         $this->assertEquals($expected_sub_query_5_index, $sub_query_5_index);
     }
 }
-// todo:
-// addOrIn opsplitsen
