@@ -78,25 +78,19 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         return $this;
     }
 
-    public function orIn(array $filter_criteria): SelectQueryBuilderInterface
+    public function orIn(string $column_name, SelectQueryBuilderInterface|array $values): SelectQueryBuilderInterface
     {
-        $or_in = [];
-
-        foreach ($filter_criteria as $column_name => $values) {
-            $or_in[] = $this->addOrIn($column_name, $values);
-        }
-
-        $this->or_in_conditions[] = $or_in;
+        $this->addOrIn($column_name, $values);
 
         return $this;
     }
 
-    protected function addOrIn(string $column_name, SelectQueryBuilderInterface|array $values): array
+    protected function addOrIn(string $column_name, SelectQueryBuilderInterface|array $values): void
     {
         if (is_array($values) && !empty($values)) {
             $values = array_map(fn ($value) => ['value' => $value], $values);
 
-            return [
+            $this->or_in_conditions[] = [
                 'column' => $column_name,
                 'values' => $values
             ];
@@ -107,13 +101,11 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
                 throw new IncorrectSubquerySelectException($values->getQuery());
             }
 
-            return [
+            $this->or_in_conditions[] = [
                 'column' => $column_name,
                 'values' => $values
             ];
         }
-
-        throw new Exception('Invalid values for or in condition!');
     }
 
     public function whereIn(string $column_name, SelectQueryBuilderInterface|array $values): self
@@ -248,25 +240,23 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
             $or_array[] = implode(' and ', $temp_or_array);
         }
 
-        foreach ($this->or_in_conditions as &$or_in_condition_array) {
+        foreach ($this->or_in_conditions as &$or_in_condition) {
             $temp_or_in_array = [];
 
-            foreach ($or_in_condition_array as &$or_in_condition) {
-                if ($or_in_condition['values'] instanceof MySQLSelectQueryBuilder) {
-                    $column = $or_in_condition['column'];
-                    $subquery = $or_in_condition['values']->getQuery($this->prepared_statement_index);
-                    $temp_or_in_array[] = $column . ' in (' . $subquery . ')';
-                    $this->prepared_statement_index = $or_in_condition['values']->getPreparedStatementIndex();
-                } else {
-                    $indexes = [];
+            if ($or_in_condition['values'] instanceof MySQLSelectQueryBuilder) {
+                $column = $or_in_condition['column'];
+                $subquery = $or_in_condition['values']->getQuery($this->prepared_statement_index);
+                $temp_or_in_array[] = $column . ' in (' . $subquery . ')';
+                $this->prepared_statement_index = $or_in_condition['values']->getPreparedStatementIndex();
+            } else {
+                $indexes = [];
 
-                    foreach ($or_in_condition['values'] as &$value) {
-                        $value['prepared_statement_index'] = $this->prepared_statement_index;
-                        $indexes[] = $this->prepared_statement_index;
-                        $this->prepared_statement_index++;
-                    }
-                    $temp_or_in_array[] = $or_in_condition['column'] . ' in (:' . implode(', :', $indexes) . ')';
+                foreach ($or_in_condition['values'] as &$value) {
+                    $value['prepared_statement_index'] = $this->prepared_statement_index;
+                    $indexes[] = $this->prepared_statement_index;
+                    $this->prepared_statement_index++;
                 }
+                $temp_or_in_array[] = $or_in_condition['column'] . ' in (:' . implode(', :', $indexes) . ')';
             }
             $or_array[] = implode(' and ', $temp_or_in_array);
         }
@@ -290,16 +280,14 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
             }
         }
 
-        foreach ($this->or_in_conditions as $or_in_condition_array) {
-            foreach ($or_in_condition_array as $or_in_condition) {
-                if ($or_in_condition['values'] instanceof MySQLSelectQueryBuilder) {
-                    $subquery_prepared_statements = $or_in_condition['values']->getPreparedStatements();
-                    $prepared_statements = array_merge($prepared_statements, $subquery_prepared_statements);
-                } else {
-                    foreach ($or_in_condition['values'] as &$value) {
-                        $parameter_name = ':' . $value['prepared_statement_index'];
-                        $prepared_statements[$parameter_name] = $value['value'];
-                    }
+        foreach ($this->or_in_conditions as $or_in_condition) {
+            if ($or_in_condition['values'] instanceof MySQLSelectQueryBuilder) {
+                $subquery_prepared_statements = $or_in_condition['values']->getPreparedStatements();
+                $prepared_statements = array_merge($prepared_statements, $subquery_prepared_statements);
+            } else {
+                foreach ($or_in_condition['values'] as &$value) {
+                    $parameter_name = ':' . $value['prepared_statement_index'];
+                    $prepared_statements[$parameter_name] = $value['value'];
                 }
             }
         }
