@@ -615,8 +615,6 @@ class SQLiteSelectQueryBuilderTest extends TestCase
 
     public function testAllOptions(): void
     {
-        //todo: orin met subquery
-        //todo: orNotIn met subquery en zonder subquery
         $sub_query_1 = $this->sqlite_database_wrapper->selectQuery('notes', NoteMockEntity::class)
             ->select(NoteMockEntity::USER_ID)
             ->where([NoteMockEntity::TITLE . ' = ' => "'Groceries'"]);
@@ -632,6 +630,10 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         $sub_query_4 = $this->sqlite_database_wrapper->selectQuery('users', UserMockEntity::class)
             ->select(UserMockEntity::ID)
             ->where([UserMockEntity::AGE . ' > ' => 60]);
+
+        $sub_query_5 = $this->sqlite_database_wrapper->selectQuery('notes', NoteMockEntity::class)
+            ->select(NoteMockEntity::USER_ID)
+            ->where([NoteMockEntity::TITLE . ' = ' => 'Movies']);
 
         $query = $this->sqlite_select_query_builder
             ->select(
@@ -661,20 +663,21 @@ class SQLiteSelectQueryBuilderTest extends TestCase
             ])
             ->orIn(UserMockEntity::AGE, [20, 30])
             ->orIn(UserMockEntity::ID, [2, 3])
+            ->orIn(UserMockEntity::ID, $sub_query_5)
             ->limit(1)
             ->getQuery();
 
         // Test raw
-        $expected_query = 'select id, name, email_address, age, phone_number from users where email_address :0 and id =  :1 and name =  :2 and name in (:3, :4, :5) and id in (select user_id from notes where title =  :6  ) and id in (select id from users where age >  :7 and phone_number :8  ) and name not  in (:9, :10) and id not  in (select user_id from notes where title =  :11  ) and id not  in (select id from users where age >  :12  ) or email_address :13 or age >  :14 and email_address :15 or age in (:16, :17) or id in (:18, :19)  limit 1';
+        $expected_query = 'select id, name, email_address, age, phone_number from users where email_address :0 and id =  :1 and name =  :2 and name in (:3, :4, :5) and id in (select user_id from notes where title =  :6  ) and id in (select id from users where age >  :7 and phone_number :8  ) and name not  in (:9, :10) and id not  in (select user_id from notes where title =  :11  ) and id not  in (select id from users where age >  :12  ) or email_address :13 or age >  :14 and email_address :15 or age in (:16, :17) or id in (:18, :19) or id in (select user_id from notes where title =  :20  )  limit 1';
         $this->assertEquals($expected_query, $query);
 
         //Test with values
-        $expected_query = "select id, name, email_address, age, phone_number from users where email_address 'test@example.com' and id =  1 and name =  'John' and name in ('John', 'Jane', 'Jim') and id in (select user_id from notes where title =  'Groceries'  ) and id in (select id from users where age >  20 and phone_number 123456789  ) and name not  in ('Tom', 10) and id not  in (select user_id from notes where title =  11  ) and id not  in (select id from users where age >  12  ) or email_address 13 or age >  14 and email_address 15 or age in (16, 17) or id in (18, 19)  limit 1";
+        $expected_query = "select id, name, email_address, age, phone_number from users where email_address 'test@example.com' and id =  1 and name =  'John' and name in ('John', 'Jane', 'Jim') and id in (select user_id from notes where title =  'Groceries'  ) and id in (select id from users where age >  20 and phone_number 123456789  ) and name not  in ('Tom', 10) and id not  in (select user_id from notes where title =  11  ) and id not  in (select id from users where age >  12  ) or email_address 13 or age >  14 and email_address 15 or age in (16, 17) or id in (18, 19) or id in (select user_id from notes where title =  'John'0  )  limit 1";
         $query = $this->getQueryWithValues();
         $this->assertEquals($expected_query, $query);
 
         // Test prepared statement indexes
-        $expected_query_index = 20;
+        $expected_query_index = 21;
         $query_index = $this->sqlite_select_query_builder->getPreparedStatementIndex();
         $this->assertEquals($expected_query_index, $query_index);
 
@@ -693,5 +696,11 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         $expected_sub_query_4_index = 13;
         $sub_query_4_index = $sub_query_4->getPreparedStatementIndex();
         $this->assertEquals($expected_sub_query_4_index, $sub_query_4_index);
+
+        $expected_sub_query_5_index = 21;
+        $sub_query_5_index = $sub_query_5->getPreparedStatementIndex();
+        $this->assertEquals($expected_sub_query_5_index, $sub_query_5_index);
     }
 }
+// todo:
+// addOrIn opsplitsen
