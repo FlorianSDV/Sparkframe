@@ -101,41 +101,39 @@ class MySQLSelectQueryBuilderTest extends TestCase
         $this->assertEquals($expected_query, $query);
     }
 
-    public function testWhere(): void
+    public static function whereDataProvider(): array
     {
-        $this->mysql_select_query_builder->where([UserMockEntity::ID . ' = ' => 1]);
-
-        // Test raw
-        $expected_query = 'select * from users where id =  :0  ';
-        $query = $this->mysql_select_query_builder->getQuery();
-
-        $this->assertEquals($expected_query, $query);
-
-        // Test with values
-        $expected_query = 'select * from users where id =  1  ';
-        $query = $this->getQueryWithValues();
-
-        $this->assertEquals($expected_query, $query);
+        return [
+            'Test where' => [
+                'where' => [UserMockEntity::ID . ' = ' => 1],
+                'expected_query' => 'select * from users where id =  :0  ',
+                'expected_query_with_values' => 'select * from users where id =  1  ',
+            ],
+            'Test where with and' => [
+                'where' => [
+                    UserMockEntity::ID . ' = ' => 1,
+                    UserMockEntity::NAME . ' = ' => "'John'"
+                ],
+                'expected_query' => 'select * from users where id =  :0 and name =  :1  ',
+                'expected_query_with_values' => "select * from users where id =  1 and name =  'John'  ",
+            ]
+        ];
     }
 
-    public function testWhereWithAnd(): void
+    #[DataProvider('whereDataProvider')]
+    public function testWhere($where, $expected_query, $expected_query_with_values): void
     {
-        $this->mysql_select_query_builder->where([
-            UserMockEntity::ID . ' = ' => 1,
-            UserMockEntity::NAME . ' = ' => "'John'"
-        ]);
+        $this->mysql_select_query_builder->where($where);
 
         // Test raw
-        $expected_query = 'select * from users where id =  :0 and name =  :1  ';
         $query = $this->mysql_select_query_builder->getQuery();
 
         $this->assertEquals($expected_query, $query);
 
         // Test with values
-        $expected_query = "select * from users where id =  1 and name =  'John'  ";
         $query = $this->getQueryWithValues();
 
-        $this->assertEquals($expected_query, $query);
+        $this->assertEquals($expected_query_with_values, $query);
     }
 
     public function testWhereIn(): void
