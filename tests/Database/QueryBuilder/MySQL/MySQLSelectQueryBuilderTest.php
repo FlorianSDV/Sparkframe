@@ -38,8 +38,6 @@ class MySQLSelectQueryBuilderTest extends TestCase
             'addWhereIn'
         );
 
-
-
         $this->orInConditionsReflection = new ReflectionProperty(
             $this->mysql_select_query_builder,
             'or_in_conditions'
@@ -66,24 +64,29 @@ class MySQLSelectQueryBuilderTest extends TestCase
         return $query;
     }
 
-    public function testSelectAll(): void
+    public static function selectDataProvider(): array
     {
-        $expected_query = 'select * from users   ';
-        $query = $this->mysql_select_query_builder->getQuery();
-
-        $this->assertEquals($expected_query, $query);
+        return [
+            'Select all' => [
+                'column_names' => [],
+                'expected_query' => 'select * from users   '
+            ],
+            'Select specific' => [
+                'column_names' => [
+                    UserMockEntity::ID,
+                    UserMockEntity::NAME
+                ],
+                'expected_query' => 'select id, name from users   '
+            ],
+        ];
     }
 
-    public function testSelect(): void
+    #[DataProvider('selectDataProvider')]
+    public function testSelect($column_names, $expected_query): void
     {
-        $expected_query = 'select id, name from users   ';
-
-        $this->mysql_select_query_builder->select(
-            UserMockEntity::ID,
-            UserMockEntity::NAME
-        );
-
-        $query = $this->mysql_select_query_builder->getQuery();
+        $query = $this->mysql_select_query_builder
+            ->select(...$column_names)
+            ->getQuery();
 
         $this->assertEquals($expected_query, $query);
     }
