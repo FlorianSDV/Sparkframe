@@ -18,34 +18,16 @@ use Sparkframe\Tests\Mocks\Entities\UserMockEntity;
 class MySQLSelectQueryBuilderTest extends TestCase
 {
     private MySQLSelectQueryBuilder $mysql_select_query_builder;
-    private MySQLDatabaseWrapper $mysql_database_wrapper;
-    private ReflectionMethod $addOrInMethodReflection;
-    private ReflectionMethod $addWhereInMethodReflection;
-    private ReflectionProperty $orInConditionsReflection;
-    private ReflectionProperty $whereInConditionsReflection;
 
     public function setUp(): void
     {
-        $this->mysql_database_wrapper = new MySQLDatabaseWrapper($this->createStub(Mysql::class));
-        $this->mysql_select_query_builder = $this->mysql_database_wrapper->selectQuery('users', UserMockEntity::class);
+        $this->mysql_select_query_builder = static::createSelectQueryBuilder('users', UserMockEntity::class);
+    }
 
-        $this->addOrInMethodReflection = new ReflectionMethod(
-            $this->mysql_select_query_builder,
-            'addOrIn'
-        );
-        $this->addWhereInMethodReflection = new ReflectionMethod(
-            $this->mysql_select_query_builder,
-            'addWhereIn'
-        );
-
-        $this->orInConditionsReflection = new ReflectionProperty(
-            $this->mysql_select_query_builder,
-            'or_in_conditions'
-        );
-        $this->whereInConditionsReflection = new ReflectionProperty(
-            $this->mysql_select_query_builder,
-            'where_in_conditions'
-        );
+    public static function createSelectQueryBuilder(string $table_name, string $entity_class): MySQLSelectQueryBuilder
+    {
+        return new MySQLDatabaseWrapper(static::createStub(Mysql::class))
+            ->selectQuery($table_name, $entity_class);
     }
 
     /**
@@ -140,16 +122,14 @@ class MySQLSelectQueryBuilderTest extends TestCase
     {
         // These subqueries are wrapped in functions so they are only created during the test and not before
         $sub_query_1_fn = function () {
-            $sub_query_1 = new MySQLDatabaseWrapper(static::createStub(Mysql::class))
-                ->selectQuery('notes', NoteMockEntity::class)
+            $sub_query_1 = static::createSelectQueryBuilder('notes', NoteMockEntity::class)
                 ->select(NoteMockEntity::USER_ID)
                 ->where([NoteMockEntity::TITLE . ' = ' => "'Groceries'"]);
             return ['column_name' => UserMockEntity::ID, 'values' => $sub_query_1];
         };
 
         $sub_query_2_fn = function () {
-            $sub_query_2 = new MySQLDatabaseWrapper(static::createStub(Mysql::class))
-                ->selectQuery('users', UserMockEntity::class)
+            $sub_query_2 = static::createSelectQueryBuilder('users', UserMockEntity::class)
                 ->select(UserMockEntity::ID)
                 ->where([UserMockEntity::AGE . ' > ' => 20]);
             return ['column_name' => UserMockEntity::ID, 'values' => $sub_query_2];
@@ -216,16 +196,14 @@ class MySQLSelectQueryBuilderTest extends TestCase
     public static function whereNotInDataProvider(): array
     {
         $sub_query_1_fn = function () {
-            $sub_query_1 = new MySQLDatabaseWrapper(static::createStub(Mysql::class))
-                ->selectQuery('notes', NoteMockEntity::class)
+            $sub_query_1 = static::createSelectQueryBuilder('notes', NoteMockEntity::class)
                 ->select(NoteMockEntity::USER_ID)
                 ->where([NoteMockEntity::TITLE . ' = ' => "'Groceries'"]);
             return ['column_name' => UserMockEntity::ID, 'values' => $sub_query_1];
         };
 
         $sub_query_2_fn = function () {
-            $sub_query_2 = new MySQLDatabaseWrapper(static::createStub(Mysql::class))
-                ->selectQuery('users', UserMockEntity::class)
+            $sub_query_2 = static::createSelectQueryBuilder('users', UserMockEntity::class)
                 ->select(UserMockEntity::ID)
                 ->where([UserMockEntity::AGE . ' > ' => 20]);
             return ['column_name' => UserMockEntity::ID, 'values' => $sub_query_2];
@@ -307,7 +285,7 @@ class MySQLSelectQueryBuilderTest extends TestCase
         };
 
         $test_or_in_with_subquery_fn = function () {
-            $sub_query = new MySQLDatabaseWrapper(static::createStub(Mysql::class)) ->selectQuery('notes', NoteMockEntity::class)
+            $sub_query = static::createSelectQueryBuilder('notes', NoteMockEntity::class)
                 ->select(NoteMockEntity::USER_ID)
                 ->where([NoteMockEntity::TITLE . ' = ' => "'Groceries'"]);
 
@@ -396,8 +374,7 @@ class MySQLSelectQueryBuilderTest extends TestCase
 
     public static function addOrInDataProvider(): array
     {
-        $sub_query = new MySQLDatabaseWrapper(static::createStub(Mysql::class))
-            ->selectQuery('users', UserMockEntity::class)
+        $sub_query = static::createSelectQueryBuilder('users', UserMockEntity::class)
             ->select(UserMockEntity::ID)
             ->where([UserMockEntity::AGE . ' > ' => 20]);
         return [
@@ -426,15 +403,15 @@ class MySQLSelectQueryBuilderTest extends TestCase
     #[DataProvider('addOrInDataProvider')]
     public function testAddOrIn($column_name, $values, $expected_array): void
     {
-        $this->addOrInMethodReflection->invoke(
+        $or_in_method_reflection = new ReflectionMethod(MySQLSelectQueryBuilder::class, 'addOrIn');
+        $or_in_method_reflection->invoke(
             $this->mysql_select_query_builder,
-            column_name: $column_name,
-            values: $values
+            $column_name,
+            $values
         );
 
-        $actual_or_in_conditions = $this->orInConditionsReflection->getValue(
-            $this->mysql_select_query_builder
-        );
+        $or_in_conditions_reflection = new ReflectionProperty(MySQLSelectQueryBuilder::class, 'or_in_conditions');
+        $actual_or_in_conditions = $or_in_conditions_reflection->getValue($this->mysql_select_query_builder);
         $this->assertEquals($expected_array, $actual_or_in_conditions);
     }
 
@@ -453,8 +430,7 @@ class MySQLSelectQueryBuilderTest extends TestCase
             ]];
         };
         $where_in_subquery_fn = function () {
-            return new MySQLDatabaseWrapper(static::createStub(Mysql::class))
-                ->selectQuery('users', UserMockEntity::class)
+            return static::createSelectQueryBuilder('users', UserMockEntity::class)
                 ->select(UserMockEntity::ID)
                 ->where([UserMockEntity::AGE . ' > ' => 20]);
         };
@@ -479,12 +455,14 @@ class MySQLSelectQueryBuilderTest extends TestCase
     #[DataProvider('addWhereInDataProvider')]
     public function testAddwhereIn(callable $values, callable $expected_where_in_conditions): void
     {
-        $this->addWhereInMethodReflection->invoke(
+        $add_where_in_method_reflection = new ReflectionMethod(MySQLSelectQueryBuilder::class, 'addWhereIn');
+        $add_where_in_method_reflection->invoke(
             $this->mysql_select_query_builder,
-            column_name: UserMockEntity::AGE,
-            values: $values()
+            UserMockEntity::AGE,
+            $values()
         );
-        $where_in_conditions = $this->whereInConditionsReflection->getValue($this->mysql_select_query_builder);
+        $where_in_conditions_reflection = new ReflectionProperty(MySQLSelectQueryBuilder::class, 'where_in_conditions');
+        $where_in_conditions = $where_in_conditions_reflection->getValue($this->mysql_select_query_builder);
 
         $this->assertEquals($expected_where_in_conditions(), $where_in_conditions);
     }
@@ -571,18 +549,9 @@ class MySQLSelectQueryBuilderTest extends TestCase
 
     public static function readyForSubQueryDataProvider(): array
     {
-        $get_query_fn = function () {
-            return new MySQLDatabaseWrapper(static::createStub(Mysql::class))
-                ->selectQuery('users', UserMockEntity::class);
-        };
-
-        $get_ready_for_subquery_fn = function () use ($get_query_fn) {
-            return $get_query_fn()->select(UserMockEntity::ID);
-        };
-
-        $get_not_ready_for_subquery_fn = function () use ($get_query_fn) {
-            return $get_query_fn()->select(UserMockEntity::ID, UserMockEntity::NAME);
-        };
+        $get_query_fn = fn () => static::createSelectQueryBuilder('users', UserMockEntity::class);
+        $get_ready_for_subquery_fn = fn () => $get_query_fn()->select(UserMockEntity::ID);
+        $get_not_ready_for_subquery_fn = fn () => $get_query_fn()->select(UserMockEntity::ID, UserMockEntity::NAME);
 
         return [
             'Ready' => [
@@ -618,23 +587,23 @@ class MySQLSelectQueryBuilderTest extends TestCase
 
     public function testAllOptions(): void
     {
-        $sub_query_1 = $this->mysql_database_wrapper->selectQuery('notes', NoteMockEntity::class)
+        $sub_query_1 = static::createSelectQueryBuilder('notes', NoteMockEntity::class)
             ->select(NoteMockEntity::USER_ID)
             ->where([NoteMockEntity::TITLE . ' = ' => "'Groceries'"]);
 
-        $sub_query_2 = $this->mysql_database_wrapper->selectQuery('users', UserMockEntity::class)
+        $sub_query_2 = static::createSelectQueryBuilder('users', UserMockEntity::class)
             ->select(UserMockEntity::ID)
             ->where([UserMockEntity::AGE . ' > ' => 20, UserMockEntity::PHONE_NUMBER => 123456789]);
 
-        $sub_query_3 = $this->mysql_database_wrapper->selectQuery('notes', NoteMockEntity::class)
+        $sub_query_3 = static::createSelectQueryBuilder('notes', NoteMockEntity::class)
             ->select(NoteMockEntity::USER_ID)
             ->where([NoteMockEntity::TITLE . ' = ' => "'To Do'"]);
 
-        $sub_query_4 = $this->mysql_database_wrapper->selectQuery('users', UserMockEntity::class)
+        $sub_query_4 = static::createSelectQueryBuilder('users', UserMockEntity::class)
             ->select(UserMockEntity::ID)
             ->where([UserMockEntity::AGE . ' > ' => 60]);
 
-        $sub_query_5 = $this->mysql_database_wrapper->selectQuery('notes', NoteMockEntity::class)
+        $sub_query_5 = static::createSelectQueryBuilder('notes', NoteMockEntity::class)
             ->select(NoteMockEntity::USER_ID)
             ->where([NoteMockEntity::TITLE . ' = ' => 'Movies']);
 
