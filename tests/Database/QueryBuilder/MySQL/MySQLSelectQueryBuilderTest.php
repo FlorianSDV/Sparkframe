@@ -540,7 +540,7 @@ class MySQLSelectQueryBuilderTest extends TestCase
 
     public function testGetQueryWithDifferentIndex(): void
     {
-        $index = 10;
+        $index = rand(0, 1000);
         $expected_index = $index + 1;
         $expected_query = "select * from users where id =  :$index  ";
         $query = $this->mysql_select_query_builder

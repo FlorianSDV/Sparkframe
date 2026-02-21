@@ -567,7 +567,7 @@ class SQLiteSelectQueryBuilderTest extends TestCase
 
     public function testGetQueryWithDifferentIndex(): void
     {
-        $index = 10;
+        $index = rand(0, 1000);
         $expected_query = "select * from users where id =  :$index  ";
         $expected_index = $index + 1;
         $query = $this->sqlite_select_query_builder
