@@ -438,48 +438,55 @@ class MySQLSelectQueryBuilderTest extends TestCase
         $this->assertEquals($expected_array, $actual_or_in_conditions);
     }
 
-
-    public function testAddWhereInWithArray(): void
+    public static function addWhereInDataProvider(): array
     {
-        $this->addWhereInMethodReflection->invoke(
-            $this->mysql_select_query_builder,
-            column_name: UserMockEntity::AGE,
-            values: [20, 30]
-        );
-        $expected_where_in_conditions = [
-            [
+        $where_in_array_fn = function () {
+            return [20, 30];
+        };
+        $expected_where_in_conditions_fn = function () {
+            return [[
                 'column' => UserMockEntity::AGE,
                  'values' => [
                     ['value' => 20],
                     ['value' => 30]
                 ]
-            ]
-        ];
-        $where_in_conditions = $this->whereInConditionsReflection->getValue($this->mysql_select_query_builder);
-
-        $this->assertEquals($expected_where_in_conditions, $where_in_conditions);
-    }
-
-    public function testAddWhereInWithSubquery(): void
-    {
-        $sub_query = $this->mysql_database_wrapper->selectQuery('users', UserMockEntity::class)
+            ]];
+        };
+        $where_in_subquery_fn = function () {
+            return new MySQLDatabaseWrapper(static::createStub(Mysql::class))
+                ->selectQuery('users', UserMockEntity::class)
             ->select(UserMockEntity::ID)
             ->where([UserMockEntity::AGE . ' > ' => 20]);
-
-        $expected_where_in_conditions_with_subquery = [[
+        };
+        $expected_where_in_conditions_with_subquery_fn = function () use ($where_in_subquery_fn) {
+            return [[
             'column' => UserMockEntity::AGE,
-            'values' => $sub_query
-        ]];
+                'values' => $where_in_subquery_fn()
+            ]];
+        };
+        return [
+            'Add where in with array' => [
+                'values' => $where_in_array_fn,
+                'expected_where_in_conditions' => $expected_where_in_conditions_fn
+            ],
+            'Add where in with subquery' => [
+                'values' => $where_in_subquery_fn,
+                'expected_where_in_conditions' => $expected_where_in_conditions_with_subquery_fn
+            ]
+        ];
+    }
 
+    #[DataProvider('addWhereInDataProvider')]
+    public function testAddwhereIn(callable $values, callable $expected_where_in_conditions): void
+    {
         $this->addWhereInMethodReflection->invoke(
             $this->mysql_select_query_builder,
             column_name: UserMockEntity::AGE,
-            values: $sub_query
+            values: $values()
         );
-
         $where_in_conditions = $this->whereInConditionsReflection->getValue($this->mysql_select_query_builder);
 
-        $this->assertEquals($expected_where_in_conditions_with_subquery, $where_in_conditions);
+        $this->assertEquals($expected_where_in_conditions(), $where_in_conditions);
     }
 
     public function testClearWhere(): void
