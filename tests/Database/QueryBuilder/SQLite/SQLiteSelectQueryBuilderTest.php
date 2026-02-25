@@ -445,47 +445,58 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         $this->assertEquals($expected_array, $actual_or_in_conditions);
     }
 
-    public function testAddWhereInWithArray(): void
+    public static function addWhereInDataProvider(): array
     {
-        $this->addWhereInMethodReflection->invoke(
-            $this->sqlite_select_query_builder,
-            column_name: UserMockEntity::AGE,
-            values: [20, 30]
-        );
-        $expected_where_in_conditions = [
-            [
+        $where_in_array_fn = function () {
+            return [20, 30];
+        };
+        $expected_where_in_conditions_fn = function () {
+            return [[
                 'column' => UserMockEntity::AGE,
                  'values' => [
                     ['value' => 20],
                     ['value' => 30]
                 ]
+            ]];
+        };
+        $where_in_subquery_fn = function () {
+            return static::createSelectQueryBuilder('users', UserMockEntity::class)
+                ->select(UserMockEntity::ID)
+                ->where([UserMockEntity::AGE . ' > ' => 20]);
+        };
+        $expected_where_in_conditions_with_subquery_fn = function () use ($where_in_subquery_fn) {
+            return [[
+                'column' => UserMockEntity::AGE,
+                'values' => $where_in_subquery_fn()
+            ]];
+        };
+        return [
+            'Add where in with array' => [
+                'column_name' => UserMockEntity::AGE,
+                'values' => $where_in_array_fn,
+                'expected_where_in_conditions' => $expected_where_in_conditions_fn
+            ],
+            'Add where in with subquery' => [
+                'column_name' => UserMockEntity::AGE,
+                'values' => $where_in_subquery_fn,
+                'expected_where_in_conditions' => $expected_where_in_conditions_with_subquery_fn
             ]
         ];
-        $where_in_conditions = $this->whereInConditionsReflection->getValue($this->sqlite_select_query_builder);
-
-        $this->assertEquals($expected_where_in_conditions, $where_in_conditions);
     }
 
-    public function testAddWhereInWithSubquery(): void
+    #[DataProvider('addWhereInDataProvider')]
+    public function testAddwhereIn(string $column_name, callable $values, callable $expected_where_in_conditions): void
     {
-        $sub_query = $this->sqlite_database_wrapper->selectQuery('users', UserMockEntity::class)
-            ->select(UserMockEntity::ID)
-            ->where([UserMockEntity::AGE . ' > ' => 20]);
-
-        $expected_where_in_conditions_with_subquery = [[
-            'column' => UserMockEntity::AGE,
-            'values' => $sub_query
-        ]];
-
-        $this->addWhereInMethodReflection->invoke(
+        $add_where_in_method_reflection = new ReflectionMethod(SQLiteSelectQueryBuilder::class, 'addWhereIn');
+        $add_where_in_method_reflection->invoke(
             $this->sqlite_select_query_builder,
-            column_name: UserMockEntity::AGE,
-            values: $sub_query
+            column_name: $column_name,
+            values: $values()
         );
+        $where_in_conditions_reflection = new ReflectionProperty(SQLiteSelectQueryBuilder::class, 'where_in_conditions');
+        $where_in_conditions = $where_in_conditions_reflection->getValue($this->sqlite_select_query_builder);
 
-        $where_in_conditions = $this->whereInConditionsReflection->getValue($this->sqlite_select_query_builder);
-
-        $this->assertEquals($expected_where_in_conditions_with_subquery, $where_in_conditions);
+        $this->assertEquals($expected_where_in_conditions(), $where_in_conditions);
     }
 
     public function testClearWhere(): void
