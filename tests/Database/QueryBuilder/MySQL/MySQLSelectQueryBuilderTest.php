@@ -103,7 +103,7 @@ class MySQLSelectQueryBuilderTest extends TestCase
     }
 
     #[DataProvider('whereDataProvider')]
-    public function testWhere($where, $expected_query, $expected_query_with_values): void
+    public function testWhere(array $where, string $expected_query, string $expected_query_with_values): void
     {
         $this->mysql_select_query_builder->where($where);
 
@@ -139,11 +139,11 @@ class MySQLSelectQueryBuilderTest extends TestCase
             return [['column_name' => UserMockEntity::NAME, 'values' => ["'John'", "'Jane'", "'Jim'"]]];
         };
 
-        $where_in_with_and = function () use ($sub_query_1_fn) {
+        $where_in_with_and_fn = function () use ($sub_query_1_fn) {
             return [$sub_query_1_fn()];
         };
 
-        $where_in_with_multiple_subqueries = function () use ($sub_query_1_fn, $sub_query_2_fn) {
+        $where_in_with_multiple_subqueries_fn = function () use ($sub_query_1_fn, $sub_query_2_fn) {
             return [$sub_query_1_fn(), $sub_query_2_fn()];
         };
 
@@ -162,13 +162,13 @@ class MySQLSelectQueryBuilderTest extends TestCase
             ],
             'Where in with subquery' => [
                 'where' => [],
-                'where_ins' => $where_in_with_and,
+                'where_ins' => $where_in_with_and_fn,
                 'expected_query' => 'select * from users where id in (select user_id from notes where title =  :0  )  ',
                 'expected_query_with_values' => "select * from users where id in (select user_id from notes where title =  'Groceries'  )  "
             ],
             'Where in with multiple subqueries' => [
                 'where' => [],
-                'where_ins' => $where_in_with_multiple_subqueries,
+                'where_ins' => $where_in_with_multiple_subqueries_fn,
                 'expected_query' => 'select * from users where id in (select user_id from notes where title =  :0  ) and id in (select id from users where age >  :1  )  ',
                 'expected_query_with_values' => "select * from users where id in (select user_id from notes where title =  'Groceries'  ) and id in (select id from users where age >  20  )  "
             ]
@@ -176,7 +176,7 @@ class MySQLSelectQueryBuilderTest extends TestCase
     }
 
     #[DataProvider('whereInDataProvider')]
-    public function testWhereIn(array $where, $where_ins, string $expected_query, string $expected_query_with_values): void
+    public function testWhereIn(array $where, callable $where_ins, string $expected_query, string $expected_query_with_values): void
     {
         $this->mysql_select_query_builder->where($where);
 
@@ -209,11 +209,11 @@ class MySQLSelectQueryBuilderTest extends TestCase
             return ['column_name' => UserMockEntity::ID, 'values' => $sub_query_2];
         };
 
-        $where_not_in_with_subquery = function () use ($sub_query_1_fn) {
+        $where_not_in_with_subquery_fn = function () use ($sub_query_1_fn) {
             return [$sub_query_1_fn()];
         };
 
-        $where_not_in_with_multiple_subqueries = function () use ($sub_query_1_fn, $sub_query_2_fn) {
+        $where_not_in_with_multiple_subqueries_fn = function () use ($sub_query_1_fn, $sub_query_2_fn) {
             return [$sub_query_1_fn(), $sub_query_2_fn()];
         };
 
@@ -236,13 +236,13 @@ class MySQLSelectQueryBuilderTest extends TestCase
             ],
             'Where not in with subquery' => [
                 'where' => [],
-                'where_not_ins' => $where_not_in_with_subquery,
+                'where_not_ins' => $where_not_in_with_subquery_fn,
                 'expected_query' => 'select * from users where id not  in (select user_id from notes where title =  :0  )  ',
                 'expected_query_with_values' => "select * from users where id not  in (select user_id from notes where title =  'Groceries'  )  "
             ],
             'Where not in with multiple subqueries' => [
                 'where' => [],
-                'where_not_ins' => $where_not_in_with_multiple_subqueries,
+                'where_not_ins' => $where_not_in_with_multiple_subqueries_fn,
                 'expected_query' => 'select * from users where id not  in (select user_id from notes where title =  :0  ) and id not  in (select id from users where age >  :1  )  ',
                 'expected_query_with_values' => "select * from users where id not  in (select user_id from notes where title =  'Groceries'  ) and id not  in (select id from users where age >  20  )  "
             ],
@@ -250,7 +250,7 @@ class MySQLSelectQueryBuilderTest extends TestCase
     }
 
     #[DataProvider('whereNotInDataProvider')]
-    public function testWhereNotIn(array $where, $where_not_ins, string $expected_query, string $expected_query_with_values): void
+    public function testWhereNotIn(array $where, callable $where_not_ins, string $expected_query, string $expected_query_with_values): void
     {
         $this->mysql_select_query_builder->where($where);
 
@@ -400,8 +400,9 @@ class MySQLSelectQueryBuilderTest extends TestCase
         ];
     }
 
+    // todo: values moet een functie zijn
     #[DataProvider('addOrInDataProvider')]
-    public function testAddOrIn($column_name, $values, $expected_array): void
+    public function testAddOrIn(string $column_name, $values, array $expected_array): void
     {
         $or_in_method_reflection = new ReflectionMethod(MySQLSelectQueryBuilder::class, 'addOrIn');
         $or_in_method_reflection->invoke(
@@ -509,7 +510,7 @@ class MySQLSelectQueryBuilderTest extends TestCase
     }
 
     #[DataProvider('getPreparedStatementIndexDataProvider')]
-    public function testGetPreparedStatementIndex($where_array, $expected_index): void
+    public function testGetPreparedStatementIndex(array $where_array, int $expected_index): void
     {
         $this->mysql_select_query_builder
             ->where($where_array)
