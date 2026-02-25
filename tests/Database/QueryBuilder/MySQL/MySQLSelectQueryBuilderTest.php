@@ -257,7 +257,10 @@ class MySQLSelectQueryBuilderTest extends TestCase
 
     public static function orDataProvider(): array
     {
+        $where = [UserMockEntity::ID . ' = ' => 1];
         $empty_or_ins_fn = fn () => [];
+
+        $empty_or_not_ins_fn = fn () => [];
 
         $test_or_in_fn = fn () => [['column_name' => UserMockEntity::AGE, 'values' => [20, 30]]];
 
@@ -276,24 +279,26 @@ class MySQLSelectQueryBuilderTest extends TestCase
 
         return [
             'Test or' => [
-                'where' => [UserMockEntity::ID . ' = ' => 1],
+                'where' => $where,
                 'ors' => [[UserMockEntity::AGE . ' > ' => 20]],
                 'or_ins' => $empty_or_ins_fn,
+                'or_not_ins' => $empty_or_not_ins_fn,
                 'expected_query' => 'select * from users where id =  :0 or age >  :1 ',
                 'expected_query_with_values' => "select * from users where id =  1 or age >  20 "
             ],
             'Test or with and' => [
-                'where' => [UserMockEntity::ID . ' = ' => 1],
+                'where' => $where,
                 'ors' => [[
                     UserMockEntity::AGE . ' > ' => 20,
                     UserMockEntity::EMAIL_ADDRESS => "'example@test.com'"
                 ]],
                 'or_ins' => $empty_or_ins_fn,
+                'or_not_ins' => $empty_or_not_ins_fn,
                 'expected_query' => 'select * from users where id =  :0 or age >  :1 and email_address :2 ',
                 'expected_query_with_values' => "select * from users where id =  1 or age >  20 and email_address 'example@test.com' "
             ],
             'Test multiple or with and' => [
-                'where' => [UserMockEntity::ID . ' = ' => 1],
+                'where' => $where,
                 'ors' => [[
                     UserMockEntity::AGE . ' > ' => 20,
                     UserMockEntity::EMAIL_ADDRESS => "'example@test.com'"
@@ -302,35 +307,63 @@ class MySQLSelectQueryBuilderTest extends TestCase
                     UserMockEntity::EMAIL_ADDRESS => "'example_2@test.com'"
                 ]],
                 'or_ins' => $empty_or_ins_fn,
+                'or_not_ins' => $empty_or_not_ins_fn,
                 'expected_query' => 'select * from users where id =  :0 or age >  :1 and email_address :2 or age >  :3 and email_address :4 ',
                 'expected_query_with_values' => "select * from users where id =  1 or age >  20 and email_address 'example@test.com' or age >  30 and email_address 'example_2@test.com' "
             ],
             'Test or in' => [
-                'where' => [UserMockEntity::ID . ' = ' => 1],
+                'where' => $where,
                 'ors' => [],
                 'or_ins' => $test_or_in_fn,
+                'or_not_ins' => $empty_or_not_ins_fn,
                 'expected_query' => 'select * from users where id =  :0 or age in (:1, :2) ',
                 'expected_query_with_values' => 'select * from users where id =  1 or age in (20, 30) '
             ],
             'Test multiple or in' => [
-                'where' => [UserMockEntity::ID . ' = ' => 1],
+                'where' => $where,
                 'ors' => [],
                 'or_ins' => $test_multiple_or_ins_fn,
+                'or_not_ins' => $empty_or_not_ins_fn,
                 'expected_query' => 'select * from users where id =  :0 or age in (:1, :2) or id in (:3, :4) ',
                 'expected_query_with_values' => 'select * from users where id =  1 or age in (20, 30) or id in (2, 3) '
             ],
             'Test or in with subquery' => [
-                'where' => [UserMockEntity::ID . ' = ' => 1],
+                'where' => $where,
                 'ors' => [],
                 'or_ins' => $test_or_in_with_subquery_fn,
+                'or_not_ins' => $empty_or_not_ins_fn,
                 'expected_query' => 'select * from users where id =  :0 or id in (select user_id from notes where title =  :1  ) ',
                 'expected_query_with_values' => 'select * from users where id =  1 or id in (select user_id from notes where title =  \'Groceries\'  ) '
+            ],
+            'Test or not in' => [
+                'where' => $where,
+                'ors' => [],
+                'or_ins' => $empty_or_ins_fn,
+                'or_not_ins' => $test_or_in_fn,
+                'expected_query' => 'select * from users where id =  :0 or age not  in (:1, :2) ',
+                'expected_query_with_values' => 'select * from users where id =  1 or age not  in (20, 30) '
+            ],
+            'Test multiple or not in' => [
+                'where' => $where,
+                'ors' => [],
+                'or_ins' => $empty_or_ins_fn,
+                'or_not_ins' => $test_multiple_or_ins_fn,
+                'expected_query' => 'select * from users where id =  :0 or age not  in (:1, :2) or id not  in (:3, :4) ',
+                'expected_query_with_values' => 'select * from users where id =  1 or age not  in (20, 30) or id not  in (2, 3) '
+            ],
+            'Test or not in with subquery' => [
+                'where' => $where,
+                'ors' => [],
+                'or_ins' => $empty_or_ins_fn,
+                'or_not_ins' => $test_or_in_with_subquery_fn,
+                'expected_query' => 'select * from users where id =  :0 or id not  in (select user_id from notes where title =  :1  ) ',
+                'expected_query_with_values' => 'select * from users where id =  1 or id not  in (select user_id from notes where title =  \'Groceries\'  ) '
             ],
         ];
     }
 
     #[DataProvider('orDataProvider')]
-    public function testOr(array $where, array $ors, callable $or_ins, string $expected_query, string $expected_query_with_values): void
+    public function testOr(array $where, array $ors, callable $or_ins, callable $or_not_ins, string $expected_query, string $expected_query_with_values): void
     {
         $this->mysql_select_query_builder
             ->where($where);
@@ -341,6 +374,10 @@ class MySQLSelectQueryBuilderTest extends TestCase
 
         foreach ($or_ins() as $or_in) {
             $this->mysql_select_query_builder->orIn($or_in['column_name'], $or_in['values']);
+        }
+
+        foreach ($or_not_ins() as $or_not_in) {
+            $this->mysql_select_query_builder->orNotIn($or_not_in['column_name'], $or_not_in['values']);
         }
 
         // Test raw
@@ -585,6 +622,10 @@ class MySQLSelectQueryBuilderTest extends TestCase
             ->select(NoteMockEntity::USER_ID)
             ->where([NoteMockEntity::TITLE . ' = ' => 'Movies']);
 
+        $sub_query_6 = static::createSelectQueryBuilder('notes', NoteMockEntity::class)
+            ->select(NoteMockEntity::USER_ID)
+            ->where([NoteMockEntity::TITLE . ' = ' => 'Movies']);
+
         $query = $this->mysql_select_query_builder
             ->select(
                 UserMockEntity::ID,
@@ -614,20 +655,23 @@ class MySQLSelectQueryBuilderTest extends TestCase
             ->orIn(UserMockEntity::AGE, [20, 30])
             ->orIn(UserMockEntity::ID, [2, 3])
             ->orIn(UserMockEntity::ID, $sub_query_5)
+            ->orNotIn(UserMockEntity::AGE, [20, 30])
+            ->orNotIn(UserMockEntity::ID, [2, 3])
+            ->orNotIn(UserMockEntity::ID, $sub_query_6)
             ->limit(1)
             ->getQuery();
 
         // Test raw
-        $expected_query = 'select id, name, email_address, age, phone_number from users where email_address :0 and id =  :1 and name =  :2 and name in (:3, :4, :5) and id in (select user_id from notes where title =  :6  ) and id in (select id from users where age >  :7 and phone_number :8  ) and name not  in (:9, :10) and id not  in (select user_id from notes where title =  :11  ) and id not  in (select id from users where age >  :12  ) or email_address :13 or age >  :14 and email_address :15 or age in (:16, :17) or id in (:18, :19) or id in (select user_id from notes where title =  :20  )  limit 1';
+        $expected_query = 'select id, name, email_address, age, phone_number from users where email_address :0 and id =  :1 and name =  :2 and name in (:3, :4, :5) and id in (select user_id from notes where title =  :6  ) and id in (select id from users where age >  :7 and phone_number :8  ) and name not  in (:9, :10) and id not  in (select user_id from notes where title =  :11  ) and id not  in (select id from users where age >  :12  ) or email_address :13 or age >  :14 and email_address :15 or age in (:16, :17) or id in (:18, :19) or id in (select user_id from notes where title =  :20  ) or age not  in (:21, :22) or id not  in (:23, :24) or id not  in (select user_id from notes where title =  :25  )  limit 1';
         $this->assertEquals($expected_query, $query);
 
         //Test with values
-        $expected_query = "select id, name, email_address, age, phone_number from users where email_address 'test@example.com' and id =  1 and name =  'John' and name in ('John', 'Jane', 'Jim') and id in (select user_id from notes where title =  'Groceries'  ) and id in (select id from users where age >  20 and phone_number 123456789  ) and name not  in ('Tom', 10) and id not  in (select user_id from notes where title =  11  ) and id not  in (select id from users where age >  12  ) or email_address 13 or age >  14 and email_address 15 or age in (16, 17) or id in (18, 19) or id in (select user_id from notes where title =  'John'0  )  limit 1";
+        $expected_query = "select id, name, email_address, age, phone_number from users where email_address 'test@example.com' and id =  1 and name =  'John' and name in ('John', 'Jane', 'Jim') and id in (select user_id from notes where title =  'Groceries'  ) and id in (select id from users where age >  20 and phone_number 123456789  ) and name not  in ('Tom', 10) and id not  in (select user_id from notes where title =  11  ) and id not  in (select id from users where age >  12  ) or email_address 13 or age >  14 and email_address 15 or age in (16, 17) or id in (18, 19) or id in (select user_id from notes where title =  'John'0  ) or age not  in ('John'1, 'John'2) or id not  in ('John'3, 'John'4) or id not  in (select user_id from notes where title =  'John'5  )  limit 1";
         $query = $this->getQueryWithValues();
         $this->assertEquals($expected_query, $query);
 
         // Test prepared statement indexes
-        $expected_query_index = 21;
+        $expected_query_index = 26;
         $query_index = $this->mysql_select_query_builder->getPreparedStatementIndex();
         $this->assertEquals($expected_query_index, $query_index);
 
@@ -650,5 +694,9 @@ class MySQLSelectQueryBuilderTest extends TestCase
         $expected_sub_query_5_index = 21;
         $sub_query_5_index = $sub_query_5->getPreparedStatementIndex();
         $this->assertEquals($expected_sub_query_5_index, $sub_query_5_index);
+
+        $expected_sub_query_6_index = 26;
+        $sub_query_6_index = $sub_query_6->getPreparedStatementIndex();
+        $this->assertEquals($expected_sub_query_6_index, $sub_query_6_index);
     }
 }

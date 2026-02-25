@@ -68,6 +68,13 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
         return $this;
     }
 
+    public function orNotIn(string $column_name, SelectQueryBuilderInterface|array $values): self
+    {
+        $this->addOrIn($column_name . ' not ', $values);
+
+        return $this;
+    }
+
     protected function addOrIn(string $column_name, SelectQueryBuilderInterface|array $values): void
     {
         if (is_array($values) && !empty($values)) {

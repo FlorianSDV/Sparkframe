@@ -25,6 +25,8 @@ interface SelectQueryBuilderInterface extends QueryBuilderInterface
 
     public function orIn(string $column_name, SelectQueryBuilderInterface|array $values): self;
 
+    public function orNotIn(string $column_name, SelectQueryBuilderInterface|array $values): self;
+
     public function getPreparedStatementIndex(): int;
 
     public function getQuery(int $prepared_statement_index = 0): string;
