@@ -296,110 +296,109 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         $this->assertEquals($expected_query_with_values, $query_with_values);
     }
 
-    public function testOr(): void
+    public static function orDataProvider(): array
     {
-        $this->sqlite_select_query_builder
-            ->where([UserMockEntity::ID . ' = ' => 1])
-            ->or([UserMockEntity::AGE . ' > ' => 20]);
+        $empty_or_ins_fn = function () {
+            return [];
+        };
 
-        // Test raw
-        $expected_query = 'select * from users where id =  :0 or age >  :1 ';
-        $query = $this->sqlite_select_query_builder->getQuery();
+        $test_or_in_fn = function () {
+            return [['column_name' => UserMockEntity::AGE, 'values' => [20, 30]]];
+        };
 
-        $this->assertEquals($expected_query, $query);
+        $test_multiple_or_ins_fn = function () {
+            return [
+                ['column_name' => UserMockEntity::AGE, 'values' => [20, 30]],
+                ['column_name' => UserMockEntity::ID, 'values' => [2, 3]],
+            ];
+        };
 
-        // Test with values
-        $expected_query = 'select * from users where id =  1 or age >  20 ';
-        $query = $this->getQueryWithValues();
+        $test_or_in_with_subquery_fn = function () {
+            $sub_query = static::createSelectQueryBuilder('notes', NoteMockEntity::class)
+                ->select(NoteMockEntity::USER_ID)
+                ->where([NoteMockEntity::TITLE . ' = ' => "'Groceries'"]);
 
-        $this->assertEquals($expected_query, $query);
+            return [['column_name' => UserMockEntity::ID, 'values' => $sub_query]];
+        };
+
+        return [
+            'Test or' => [
+                'where' => [UserMockEntity::ID . ' = ' => 1],
+                'ors' => [[UserMockEntity::AGE . ' > ' => 20]],
+                'or_ins' => $empty_or_ins_fn,
+                'expected_query' => 'select * from users where id =  :0 or age >  :1 ',
+                'expected_query_with_values' => "select * from users where id =  1 or age >  20 "
+            ],
+            'Test or with and' => [
+                'where' => [UserMockEntity::ID . ' = ' => 1],
+                'ors' => [[
+                    UserMockEntity::AGE . ' > ' => 20,
+                    UserMockEntity::EMAIL_ADDRESS => "'example@test.com'"
+                ]],
+                'or_ins' => $empty_or_ins_fn,
+                'expected_query' => 'select * from users where id =  :0 or age >  :1 and email_address :2 ',
+                'expected_query_with_values' => "select * from users where id =  1 or age >  20 and email_address 'example@test.com' "
+            ],
+            'Test multiple or with and' => [
+                'where' => [UserMockEntity::ID . ' = ' => 1],
+                'ors' => [[
+                    UserMockEntity::AGE . ' > ' => 20,
+                    UserMockEntity::EMAIL_ADDRESS => "'example@test.com'"
+                ],[
+                    UserMockEntity::AGE . ' > ' => 30,
+                    UserMockEntity::EMAIL_ADDRESS => "'example_2@test.com'"
+                ]],
+                'or_ins' => $empty_or_ins_fn,
+                'expected_query' => 'select * from users where id =  :0 or age >  :1 and email_address :2 or age >  :3 and email_address :4 ',
+                'expected_query_with_values' => "select * from users where id =  1 or age >  20 and email_address 'example@test.com' or age >  30 and email_address 'example_2@test.com' "
+            ],
+            'Test or in' => [
+                'where' => [UserMockEntity::ID . ' = ' => 1],
+                'ors' => [],
+                'or_ins' => $test_or_in_fn,
+                'expected_query' => 'select * from users where id =  :0 or age in (:1, :2) ',
+                'expected_query_with_values' => 'select * from users where id =  1 or age in (20, 30) '
+            ],
+            'Test multiple or in' => [
+                'where' => [UserMockEntity::ID . ' = ' => 1],
+                'ors' => [],
+                'or_ins' => $test_multiple_or_ins_fn,
+                'expected_query' => 'select * from users where id =  :0 or age in (:1, :2) or id in (:3, :4) ',
+                'expected_query_with_values' => 'select * from users where id =  1 or age in (20, 30) or id in (2, 3) '
+            ],
+            'Test or in with subquery' => [
+                'where' => [UserMockEntity::ID . ' = ' => 1],
+                'ors' => [],
+                'or_ins' => $test_or_in_with_subquery_fn,
+                'expected_query' => 'select * from users where id =  :0 or id in (select user_id from notes where title =  :1  ) ',
+                'expected_query_with_values' => 'select * from users where id =  1 or id in (select user_id from notes where title =  \'Groceries\'  ) '
+            ],
+        ];
     }
 
-    public function testOrWithAnd(): void
+    #[DataProvider('orDataProvider')]
+    public function testOr(array $where, array $ors, callable $or_ins, string $expected_query, string $expected_query_with_values): void
     {
         $this->sqlite_select_query_builder
-            ->where([UserMockEntity::ID . ' = ' => 1])
-            ->or([
-                UserMockEntity::AGE . ' > ' => 20,
-                UserMockEntity::EMAIL_ADDRESS => "'example@test.com'"
-            ]);
+            ->where($where);
+
+        foreach ($ors as $or) {
+            $this->sqlite_select_query_builder->or($or);
+        }
+
+        foreach ($or_ins() as $or_in) {
+            $this->sqlite_select_query_builder->orIn($or_in['column_name'], $or_in['values']);
+        }
 
         // Test raw
-        $expected_query = 'select * from users where id =  :0 or age >  :1 and email_address :2 ';
         $query = $this->sqlite_select_query_builder->getQuery();
 
         $this->assertEquals($expected_query, $query);
 
         // Test with values
-        $expected_query = "select * from users where id =  1 or age >  20 and email_address 'example@test.com' ";
         $query = $this->getQueryWithValues();
 
-        $this->assertEquals($expected_query, $query);
-    }
-
-    public function testMultipleOrWithAnd(): void
-    {
-        $this->sqlite_select_query_builder
-            ->where([UserMockEntity::ID . ' = ' => 1])
-            ->or([
-                UserMockEntity::AGE . ' > ' => 20,
-                UserMockEntity::EMAIL_ADDRESS => "'example@test.com'"
-            ])
-            ->or([
-                UserMockEntity::AGE . ' > ' => 30,
-                UserMockEntity::EMAIL_ADDRESS => "'example_2@test.com'"
-            ]);
-
-        // Test raw
-        $expected_query = 'select * from users where id =  :0 or age >  :1 and email_address :2 or age >  :3 and email_address :4 ';
-        $query = $this->sqlite_select_query_builder->getQuery();
-
-        $this->assertEquals($expected_query, $query);
-
-        // Test with values
-        $expected_query = "select * from users where id =  1 or age >  20 and email_address 'example@test.com' or age >  30 and email_address 'example_2@test.com' ";
-        $query = $this->getQueryWithValues();
-
-        $this->assertEquals($expected_query, $query);
-    }
-
-    public function testOrIn(): void
-    {
-        $this->sqlite_select_query_builder
-            ->where([UserMockEntity::ID . ' = ' => 1])
-            ->orIn(UserMockEntity::AGE, [20, 30]);
-
-        // Test raw
-        $expected_query = 'select * from users where id =  :0 or age in (:1, :2) ';
-        $query = $this->sqlite_select_query_builder->getQuery();
-
-        $this->assertEquals($expected_query, $query);
-
-        // Test with values
-        $expected_query = 'select * from users where id =  1 or age in (20, 30) ';
-        $query = $this->getQueryWithValues();
-
-        $this->assertEquals($expected_query, $query);
-    }
-
-    public function testMultipleOrIn(): void
-    {
-        $this->sqlite_select_query_builder
-            ->where([UserMockEntity::ID . ' = ' => 1])
-            ->orIn(UserMockEntity::AGE, [20, 30])
-            ->orIn(UserMockEntity::ID, [2, 3]);
-
-        // Test raw
-        $expected_query = 'select * from users where id =  :0 or age in (:1, :2) or id in (:3, :4) ';
-        $query = $this->sqlite_select_query_builder->getQuery();
-
-        $this->assertEquals($expected_query, $query);
-
-        // Test with values
-        $expected_query = 'select * from users where id =  1 or age in (20, 30) or id in (2, 3) ';
-        $query = $this->getQueryWithValues();
-
-        $this->assertEquals($expected_query, $query);
+        $this->assertEquals($expected_query_with_values, $query);
     }
 
     public static function addOrInDataProvider(): array
@@ -487,28 +486,6 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         $where_in_conditions = $this->whereInConditionsReflection->getValue($this->sqlite_select_query_builder);
 
         $this->assertEquals($expected_where_in_conditions_with_subquery, $where_in_conditions);
-    }
-
-    public function testOrInWithSubquery(): void
-    {
-        $sub_query = $this->sqlite_database_wrapper->selectQuery('notes', NoteMockEntity::class)
-            ->select(NoteMockEntity::USER_ID)
-            ->where([NoteMockEntity::TITLE . ' = ' => "'Groceries'"]);
-        $this->sqlite_select_query_builder
-            ->where([UserMockEntity::ID . ' = ' => 1])
-            ->orIn(UserMockEntity::ID, $sub_query);
-
-        // Test raw
-        $expected_query = 'select * from users where id =  :0 or id in (select user_id from notes where title =  :1  ) ';
-        $query = $this->sqlite_select_query_builder->getQuery();
-
-        $this->assertEquals($expected_query, $query);
-
-        // Test with values
-        $expected_query = 'select * from users where id =  1 or id in (select user_id from notes where title =  \'Groceries\'  ) ';
-        $query = $this->getQueryWithValues();
-
-        $this->assertEquals($expected_query, $query);
     }
 
     public function testClearWhere(): void
