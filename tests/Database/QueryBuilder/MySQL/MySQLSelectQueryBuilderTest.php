@@ -374,13 +374,13 @@ class MySQLSelectQueryBuilderTest extends TestCase
 
     public static function addOrInDataProvider(): array
     {
-        $sub_query = static::createSelectQueryBuilder('users', UserMockEntity::class)
+        $sub_query_fn = fn () => static::createSelectQueryBuilder('users', UserMockEntity::class)
             ->select(UserMockEntity::ID)
             ->where([UserMockEntity::AGE . ' > ' => 20]);
         return [
             'With array' => [
                 'column_name' => UserMockEntity::AGE,
-                'values' => [20, 30],
+                'values' => fn () => [20, 30],
                 'expected_array' => [[
                     'column' => UserMockEntity::AGE,
                      'values' => [
@@ -391,24 +391,23 @@ class MySQLSelectQueryBuilderTest extends TestCase
             ],
             'With subquery' => [
                 'column_name' => UserMockEntity::AGE,
-                'values' => $sub_query,
+                'values' => $sub_query_fn,
                 'expected_array' => [[
                     'column' => UserMockEntity::AGE,
-                     'values' => $sub_query
+                     'values' => $sub_query_fn()
                 ]]
             ]
         ];
     }
 
-    // todo: values moet een functie zijn
     #[DataProvider('addOrInDataProvider')]
-    public function testAddOrIn(string $column_name, $values, array $expected_array): void
+    public function testAddOrIn(string $column_name, callable $values, array $expected_array): void
     {
         $or_in_method_reflection = new ReflectionMethod(MySQLSelectQueryBuilder::class, 'addOrIn');
         $or_in_method_reflection->invoke(
             $this->mysql_select_query_builder,
-            $column_name,
-            $values
+            column_name: $column_name,
+            values: $values()
         );
 
         $or_in_conditions_reflection = new ReflectionProperty(MySQLSelectQueryBuilder::class, 'or_in_conditions');
