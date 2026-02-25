@@ -442,10 +442,12 @@ class MySQLSelectQueryBuilderTest extends TestCase
         };
         return [
             'Add where in with array' => [
+                'column_name' => UserMockEntity::AGE,
                 'values' => $where_in_array_fn,
                 'expected_where_in_conditions' => $expected_where_in_conditions_fn
             ],
             'Add where in with subquery' => [
+                'column_name' => UserMockEntity::AGE,
                 'values' => $where_in_subquery_fn,
                 'expected_where_in_conditions' => $expected_where_in_conditions_with_subquery_fn
             ]
@@ -453,13 +455,13 @@ class MySQLSelectQueryBuilderTest extends TestCase
     }
 
     #[DataProvider('addWhereInDataProvider')]
-    public function testAddwhereIn(callable $values, callable $expected_where_in_conditions): void
+    public function testAddwhereIn(string $column_name, callable $values, callable $expected_where_in_conditions): void
     {
         $add_where_in_method_reflection = new ReflectionMethod(MySQLSelectQueryBuilder::class, 'addWhereIn');
         $add_where_in_method_reflection->invoke(
             $this->mysql_select_query_builder,
-            UserMockEntity::AGE,
-            $values()
+            column_name: $column_name,
+            values: $values()
         );
         $where_in_conditions_reflection = new ReflectionProperty(MySQLSelectQueryBuilder::class, 'where_in_conditions');
         $where_in_conditions = $where_in_conditions_reflection->getValue($this->mysql_select_query_builder);
