@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Sparkframe\Tests\Database\QueryBuilder\SQLite;
+namespace Sparkframe\Tests\Database\QueryBuilder\Mysql;
 
 use Exception;
 use Pdo\Mysql;
@@ -18,36 +18,16 @@ use Sparkframe\Tests\Mocks\Entities\UserMockEntity;
 class MySQLSelectQueryBuilderTest extends TestCase
 {
     private MySQLSelectQueryBuilder $mysql_select_query_builder;
-    private MySQLDatabaseWrapper $mysql_database_wrapper;
-    private ReflectionMethod $addOrInMethodReflection;
-    private ReflectionMethod $addWhereInMethodReflection;
-    private ReflectionProperty $orInConditionsReflection;
-    private ReflectionProperty $whereInConditionsReflection;
 
     public function setUp(): void
     {
-        $this->mysql_database_wrapper = new MySQLDatabaseWrapper($this->createStub(Mysql::class));
-        $this->mysql_select_query_builder = $this->mysql_database_wrapper->selectQuery('users', UserMockEntity::class);
+        $this->mysql_select_query_builder = static::createSelectQueryBuilder('users', UserMockEntity::class);
+    }
 
-        $this->addOrInMethodReflection = new ReflectionMethod(
-            $this->mysql_select_query_builder,
-            'addOrIn'
-        );
-        $this->addWhereInMethodReflection = new ReflectionMethod(
-            $this->mysql_select_query_builder,
-            'addWhereIn'
-        );
-
-
-
-        $this->orInConditionsReflection = new ReflectionProperty(
-            $this->mysql_select_query_builder,
-            'or_in_conditions'
-        );
-        $this->whereInConditionsReflection = new ReflectionProperty(
-            $this->mysql_select_query_builder,
-            'where_in_conditions'
-        );
+    public static function createSelectQueryBuilder(string $table_name, string $entity_class): MySQLSelectQueryBuilder
+    {
+        return new MySQLDatabaseWrapper(static::createStub(Mysql::class))
+            ->selectQuery($table_name, $entity_class);
     }
 
     /**
@@ -66,24 +46,29 @@ class MySQLSelectQueryBuilderTest extends TestCase
         return $query;
     }
 
-    public function testSelectAll(): void
+    public static function selectDataProvider(): array
     {
-        $expected_query = 'select * from users   ';
-        $query = $this->mysql_select_query_builder->getQuery();
-
-        $this->assertEquals($expected_query, $query);
+        return [
+            'Select all' => [
+                'column_names' => [],
+                'expected_query' => 'select * from users   '
+            ],
+            'Select specific' => [
+                'column_names' => [
+                    UserMockEntity::ID,
+                    UserMockEntity::NAME
+                ],
+                'expected_query' => 'select id, name from users   '
+            ],
+        ];
     }
 
-    public function testSelect(): void
+    #[DataProvider('selectDataProvider')]
+    public function testSelect(array $column_names, string $expected_query): void
     {
-        $expected_query = 'select id, name from users   ';
-
-        $this->mysql_select_query_builder->select(
-            UserMockEntity::ID,
-            UserMockEntity::NAME
-        );
-
-        $query = $this->mysql_select_query_builder->getQuery();
+        $query = $this->mysql_select_query_builder
+            ->select(...$column_names)
+            ->getQuery();
 
         $this->assertEquals($expected_query, $query);
     }
@@ -98,327 +83,286 @@ class MySQLSelectQueryBuilderTest extends TestCase
         $this->assertEquals($expected_query, $query);
     }
 
-    public function testWhere(): void
+    public static function whereDataProvider(): array
     {
-        $this->mysql_select_query_builder->where([UserMockEntity::ID . ' = ' => 1]);
+        return [
+            'Test where' => [
+                'where' => [UserMockEntity::ID . ' = ' => 1],
+                'expected_query' => 'select * from users where id =  :0  ',
+                'expected_query_with_values' => 'select * from users where id =  1  ',
+            ],
+            'Test where with and' => [
+                'where' => [
+                    UserMockEntity::ID . ' = ' => 1,
+                    UserMockEntity::NAME . ' = ' => "'John'"
+                ],
+                'expected_query' => 'select * from users where id =  :0 and name =  :1  ',
+                'expected_query_with_values' => "select * from users where id =  1 and name =  'John'  ",
+            ]
+        ];
+    }
+
+    #[DataProvider('whereDataProvider')]
+    public function testWhere(array $where, string $expected_query, string $expected_query_with_values): void
+    {
+        $this->mysql_select_query_builder->where($where);
 
         // Test raw
-        $expected_query = 'select * from users where id =  :0  ';
         $query = $this->mysql_select_query_builder->getQuery();
 
         $this->assertEquals($expected_query, $query);
 
         // Test with values
-        $expected_query = 'select * from users where id =  1  ';
         $query = $this->getQueryWithValues();
 
-        $this->assertEquals($expected_query, $query);
+        $this->assertEquals($expected_query_with_values, $query);
     }
 
-    public function testWhereWithAnd(): void
+    public static function whereInDataProvider(): array
     {
-        $this->mysql_select_query_builder->where([
-            UserMockEntity::ID . ' = ' => 1,
-            UserMockEntity::NAME . ' = ' => "'John'"
-        ]);
+        // These subqueries are wrapped in functions so they are only created during the test and not before
+        $sub_query_1_fn = function () {
+            $sub_query_1 = static::createSelectQueryBuilder('notes', NoteMockEntity::class)
+                ->select(NoteMockEntity::USER_ID)
+                ->where([NoteMockEntity::TITLE . ' = ' => "'Groceries'"]);
+            return ['column_name' => UserMockEntity::ID, 'values' => $sub_query_1];
+        };
 
-        // Test raw
-        $expected_query = 'select * from users where id =  :0 and name =  :1  ';
-        $query = $this->mysql_select_query_builder->getQuery();
+        $sub_query_2_fn = function () {
+            $sub_query_2 = static::createSelectQueryBuilder('users', UserMockEntity::class)
+                ->select(UserMockEntity::ID)
+                ->where([UserMockEntity::AGE . ' > ' => 20]);
+            return ['column_name' => UserMockEntity::ID, 'values' => $sub_query_2];
+        };
 
-        $this->assertEquals($expected_query, $query);
+        $where_ins_array_fn = fn () => [['column_name' => UserMockEntity::NAME, 'values' => ["'John'", "'Jane'", "'Jim'"]]];
 
-        // Test with values
-        $expected_query = "select * from users where id =  1 and name =  'John'  ";
-        $query = $this->getQueryWithValues();
+        $where_in_with_and_fn = fn () => [$sub_query_1_fn()];
 
-        $this->assertEquals($expected_query, $query);
+        $where_in_with_multiple_subqueries_fn = fn () => [$sub_query_1_fn(), $sub_query_2_fn()];
+
+        return [
+            'Single where in' => [
+                'where' => [],
+                'where_ins' => $where_ins_array_fn,
+                'expected_query' => 'select * from users where name in (:0, :1, :2)  ',
+                'expected_query_with_values' => "select * from users where name in ('John', 'Jane', 'Jim')  "
+            ],
+            'Where in with and' => [
+                'where' => [UserMockEntity::AGE . ' > ' => 20],
+                'where_ins' => $where_ins_array_fn,
+                'expected_query' => 'select * from users where age >  :0 and name in (:1, :2, :3)  ',
+                'expected_query_with_values' => "select * from users where age >  20 and name in ('John', 'Jane', 'Jim')  "
+            ],
+            'Where in with subquery' => [
+                'where' => [],
+                'where_ins' => $where_in_with_and_fn,
+                'expected_query' => 'select * from users where id in (select user_id from notes where title =  :0  )  ',
+                'expected_query_with_values' => "select * from users where id in (select user_id from notes where title =  'Groceries'  )  "
+            ],
+            'Where in with multiple subqueries' => [
+                'where' => [],
+                'where_ins' => $where_in_with_multiple_subqueries_fn,
+                'expected_query' => 'select * from users where id in (select user_id from notes where title =  :0  ) and id in (select id from users where age >  :1  )  ',
+                'expected_query_with_values' => "select * from users where id in (select user_id from notes where title =  'Groceries'  ) and id in (select id from users where age >  20  )  "
+            ]
+        ];
     }
 
-    public function testWhereIn(): void
+    #[DataProvider('whereInDataProvider')]
+    public function testWhereIn(array $where, callable $where_ins, string $expected_query, string $expected_query_with_values): void
     {
-        $this->mysql_select_query_builder->whereIn(UserMockEntity::NAME, ["'John'", "'Jane'", "'Jim'"]);
+        $this->mysql_select_query_builder->where($where);
 
-        // Test raw
-        $expected_query = 'select * from users where name in (:0, :1, :2)  ';
+        foreach ($where_ins() as $where_in) {
+            $column_name = $where_in['column_name'];
+            $values = $where_in['values'];
+            $this->mysql_select_query_builder->whereIn(column_name: $column_name, values: $values);
+        }
+
         $query = $this->mysql_select_query_builder->getQuery();
-
         $this->assertEquals($expected_query, $query);
 
-        // Test with values
-        $expected_query = "select * from users where name in ('John', 'Jane', 'Jim')  ";
-        $query = $this->getQueryWithValues();
-
-        $this->assertEquals($expected_query, $query);
+        $query_with_values = $this->getQueryWithValues();
+        $this->assertEquals($expected_query_with_values, $query_with_values);
     }
 
-    public function testWhereInWithAnd(): void
+    public static function whereNotInDataProvider(): array
+    {
+        $sub_query_1_fn = function () {
+            $sub_query_1 = static::createSelectQueryBuilder('notes', NoteMockEntity::class)
+                ->select(NoteMockEntity::USER_ID)
+                ->where([NoteMockEntity::TITLE . ' = ' => "'Groceries'"]);
+            return ['column_name' => UserMockEntity::ID, 'values' => $sub_query_1];
+        };
+
+        $sub_query_2_fn = function () {
+            $sub_query_2 = static::createSelectQueryBuilder('users', UserMockEntity::class)
+                ->select(UserMockEntity::ID)
+                ->where([UserMockEntity::AGE . ' > ' => 20]);
+            return ['column_name' => UserMockEntity::ID, 'values' => $sub_query_2];
+        };
+
+        $where_not_in_with_subquery_fn = fn () => [$sub_query_1_fn()];
+
+        $where_not_in_with_multiple_subqueries_fn = fn () => [$sub_query_1_fn(), $sub_query_2_fn()];
+
+        $where_not_ins_array_fn = fn () => [['column_name' => UserMockEntity::NAME, 'values' => ["'John'", "'Jane'", "'Jim'"]]];
+
+        return [
+            'Single where not in' => [
+                'where' => [],
+                'where_not_ins' => $where_not_ins_array_fn,
+                'expected_query' => 'select * from users where name not  in (:0, :1, :2)  ',
+                'expected_query_with_values' => "select * from users where name not  in ('John', 'Jane', 'Jim')  "
+            ],
+            'Where not in with and' => [
+                'where' => [UserMockEntity::AGE . ' > ' => 20],
+                'where_not_ins' => $where_not_ins_array_fn,
+                'expected_query' => 'select * from users where age >  :0 and name not  in (:1, :2, :3)  ',
+                'expected_query_with_values' => "select * from users where age >  20 and name not  in ('John', 'Jane', 'Jim')  "
+            ],
+            'Where not in with subquery' => [
+                'where' => [],
+                'where_not_ins' => $where_not_in_with_subquery_fn,
+                'expected_query' => 'select * from users where id not  in (select user_id from notes where title =  :0  )  ',
+                'expected_query_with_values' => "select * from users where id not  in (select user_id from notes where title =  'Groceries'  )  "
+            ],
+            'Where not in with multiple subqueries' => [
+                'where' => [],
+                'where_not_ins' => $where_not_in_with_multiple_subqueries_fn,
+                'expected_query' => 'select * from users where id not  in (select user_id from notes where title =  :0  ) and id not  in (select id from users where age >  :1  )  ',
+                'expected_query_with_values' => "select * from users where id not  in (select user_id from notes where title =  'Groceries'  ) and id not  in (select id from users where age >  20  )  "
+            ],
+        ];
+    }
+
+    #[DataProvider('whereNotInDataProvider')]
+    public function testWhereNotIn(array $where, callable $where_not_ins, string $expected_query, string $expected_query_with_values): void
+    {
+        $this->mysql_select_query_builder->where($where);
+
+        foreach ($where_not_ins() as $where_not_in) {
+            $column_name = $where_not_in['column_name'];
+            $values = $where_not_in['values'];
+            $this->mysql_select_query_builder->whereNotIn(column_name: $column_name, values: $values);
+        }
+
+        $query = $this->mysql_select_query_builder->getQuery();
+        $this->assertEquals($expected_query, $query);
+
+        $query_with_values = $this->getQueryWithValues();
+        $this->assertEquals($expected_query_with_values, $query_with_values);
+    }
+
+    public static function orDataProvider(): array
+    {
+        $empty_or_ins_fn = fn () => [];
+
+        $test_or_in_fn = fn () => [['column_name' => UserMockEntity::AGE, 'values' => [20, 30]]];
+
+        $test_multiple_or_ins_fn = fn () => [
+            ['column_name' => UserMockEntity::AGE, 'values' => [20, 30]],
+            ['column_name' => UserMockEntity::ID, 'values' => [2, 3]],
+        ];
+
+        $test_or_in_with_subquery_fn = function () {
+            $sub_query = static::createSelectQueryBuilder('notes', NoteMockEntity::class)
+                ->select(NoteMockEntity::USER_ID)
+                ->where([NoteMockEntity::TITLE . ' = ' => "'Groceries'"]);
+
+            return [['column_name' => UserMockEntity::ID, 'values' => $sub_query]];
+        };
+
+        return [
+            'Test or' => [
+                'where' => [UserMockEntity::ID . ' = ' => 1],
+                'ors' => [[UserMockEntity::AGE . ' > ' => 20]],
+                'or_ins' => $empty_or_ins_fn,
+                'expected_query' => 'select * from users where id =  :0 or age >  :1 ',
+                'expected_query_with_values' => "select * from users where id =  1 or age >  20 "
+            ],
+            'Test or with and' => [
+                'where' => [UserMockEntity::ID . ' = ' => 1],
+                'ors' => [[
+                    UserMockEntity::AGE . ' > ' => 20,
+                    UserMockEntity::EMAIL_ADDRESS => "'example@test.com'"
+                ]],
+                'or_ins' => $empty_or_ins_fn,
+                'expected_query' => 'select * from users where id =  :0 or age >  :1 and email_address :2 ',
+                'expected_query_with_values' => "select * from users where id =  1 or age >  20 and email_address 'example@test.com' "
+            ],
+            'Test multiple or with and' => [
+                'where' => [UserMockEntity::ID . ' = ' => 1],
+                'ors' => [[
+                    UserMockEntity::AGE . ' > ' => 20,
+                    UserMockEntity::EMAIL_ADDRESS => "'example@test.com'"
+                ],[
+                    UserMockEntity::AGE . ' > ' => 30,
+                    UserMockEntity::EMAIL_ADDRESS => "'example_2@test.com'"
+                ]],
+                'or_ins' => $empty_or_ins_fn,
+                'expected_query' => 'select * from users where id =  :0 or age >  :1 and email_address :2 or age >  :3 and email_address :4 ',
+                'expected_query_with_values' => "select * from users where id =  1 or age >  20 and email_address 'example@test.com' or age >  30 and email_address 'example_2@test.com' "
+            ],
+            'Test or in' => [
+                'where' => [UserMockEntity::ID . ' = ' => 1],
+                'ors' => [],
+                'or_ins' => $test_or_in_fn,
+                'expected_query' => 'select * from users where id =  :0 or age in (:1, :2) ',
+                'expected_query_with_values' => 'select * from users where id =  1 or age in (20, 30) '
+            ],
+            'Test multiple or in' => [
+                'where' => [UserMockEntity::ID . ' = ' => 1],
+                'ors' => [],
+                'or_ins' => $test_multiple_or_ins_fn,
+                'expected_query' => 'select * from users where id =  :0 or age in (:1, :2) or id in (:3, :4) ',
+                'expected_query_with_values' => 'select * from users where id =  1 or age in (20, 30) or id in (2, 3) '
+            ],
+            'Test or in with subquery' => [
+                'where' => [UserMockEntity::ID . ' = ' => 1],
+                'ors' => [],
+                'or_ins' => $test_or_in_with_subquery_fn,
+                'expected_query' => 'select * from users where id =  :0 or id in (select user_id from notes where title =  :1  ) ',
+                'expected_query_with_values' => 'select * from users where id =  1 or id in (select user_id from notes where title =  \'Groceries\'  ) '
+            ],
+        ];
+    }
+
+    #[DataProvider('orDataProvider')]
+    public function testOr(array $where, array $ors, callable $or_ins, string $expected_query, string $expected_query_with_values): void
     {
         $this->mysql_select_query_builder
-            ->whereIn(UserMockEntity::NAME, ["'John'", "'Jane'", "'Jim'"])
-            ->where([UserMockEntity::AGE . ' > ' => 20]);
+            ->where($where);
+
+        foreach ($ors as $or) {
+            $this->mysql_select_query_builder->or($or);
+        }
+
+        foreach ($or_ins() as $or_in) {
+            $this->mysql_select_query_builder->orIn($or_in['column_name'], $or_in['values']);
+        }
 
         // Test raw
-        $expected_query = 'select * from users where age >  :0 and name in (:1, :2, :3)  ';
         $query = $this->mysql_select_query_builder->getQuery();
 
         $this->assertEquals($expected_query, $query);
 
         // Test with values
-        $expected_query = "select * from users where age >  20 and name in ('John', 'Jane', 'Jim')  ";
         $query = $this->getQueryWithValues();
 
-        $this->assertEquals($expected_query, $query);
-    }
-
-    public function testWhereInWithSubquery(): void
-    {
-        $sub_query = $this->mysql_database_wrapper->selectQuery('notes', NoteMockEntity::class)
-            ->select(NoteMockEntity::USER_ID)
-            ->where([NoteMockEntity::TITLE . ' = ' => "'Groceries'"]);
-
-        $this->mysql_select_query_builder->whereIn(UserMockEntity::ID, $sub_query);
-
-        // Test raw
-        $expected_query = 'select * from users where id in (select user_id from notes where title =  :0  )  ';
-        $query = $this->mysql_select_query_builder->getQuery();
-
-        $this->assertEquals($expected_query, $query);
-
-        // Test with values
-        $expected_query = "select * from users where id in (select user_id from notes where title =  'Groceries'  )  ";
-        $query = $this->getQueryWithValues();
-
-        $this->assertEquals($expected_query, $query);
-    }
-
-    public function testWhereInWithMultipleSubqueries(): void
-    {
-        $sub_query_1 = $this->mysql_database_wrapper->selectQuery('notes', NoteMockEntity::class)
-            ->select(NoteMockEntity::USER_ID)
-            ->where([NoteMockEntity::TITLE . ' = ' => "'Groceries'"]);
-
-        $sub_query_2 = $this->mysql_database_wrapper->selectQuery('users', UserMockEntity::class)
-            ->select(UserMockEntity::ID)
-            ->where([UserMockEntity::AGE . ' > ' => 20]);
-
-        $this->mysql_select_query_builder
-            ->whereIn(UserMockEntity::ID, $sub_query_1)
-            ->whereIn(UserMockEntity::ID, $sub_query_2);
-
-        // Test raw
-        $expected_query = 'select * from users where id in (select user_id from notes where title =  :0  ) and id in (select id from users where age >  :1  )  ';
-        $query = $this->mysql_select_query_builder->getQuery();
-
-        $this->assertEquals($expected_query, $query);
-
-        // Test with values
-        $expected_query = "select * from users where id in (select user_id from notes where title =  'Groceries'  ) and id in (select id from users where age >  20  )  ";
-        $query = $this->getQueryWithValues();
-
-        $this->assertEquals($expected_query, $query);
-    }
-
-    public function testWhereNotIn(): void
-    {
-        $this->mysql_select_query_builder->whereNotIn(UserMockEntity::NAME, ["'John'", "'Jane'", "'Jim'"]);
-
-        // Test raw
-        $expected_query = 'select * from users where name not  in (:0, :1, :2)  ';
-        $query = $this->mysql_select_query_builder->getQuery();
-
-        $this->assertEquals($expected_query, $query);
-
-        // Test with values
-        $expected_query = "select * from users where name not  in ('John', 'Jane', 'Jim')  ";
-        $query = $this->getQueryWithValues();
-
-        $this->assertEquals($expected_query, $query);
-    }
-
-    public function testWhereNotInWithAnd(): void
-    {
-        $this->mysql_select_query_builder
-            ->whereNotIn(UserMockEntity::NAME, ["'John'", "'Jane'", "'Jim'"])
-            ->where([UserMockEntity::AGE . ' > ' => 20]);
-
-        // Test raw
-        $expected_query = 'select * from users where age >  :0 and name not  in (:1, :2, :3)  ';
-        $query = $this->mysql_select_query_builder->getQuery();
-
-        $this->assertEquals($expected_query, $query);
-
-        // Test with values
-        $expected_query = "select * from users where age >  20 and name not  in ('John', 'Jane', 'Jim')  ";
-        $query = $this->getQueryWithValues();
-
-        $this->assertEquals($expected_query, $query);
-    }
-
-    public function testWhereNotInWithSubquery(): void
-    {
-        $sub_query = $this->mysql_database_wrapper->selectQuery('notes', NoteMockEntity::class)
-            ->select(NoteMockEntity::USER_ID)
-            ->where([NoteMockEntity::TITLE . ' = ' => "'Groceries'"]);
-
-        $this->mysql_select_query_builder->whereNotIn(UserMockEntity::ID, $sub_query);
-
-        // Test raw
-        $expected_query = 'select * from users where id not  in (select user_id from notes where title =  :0  )  ';
-        $query = $this->mysql_select_query_builder->getQuery();
-
-        $this->assertEquals($expected_query, $query);
-
-        // Test with values
-        $expected_query = "select * from users where id not  in (select user_id from notes where title =  'Groceries'  )  ";
-        $query = $this->getQueryWithValues();
-
-        $this->assertEquals($expected_query, $query);
-    }
-
-    public function testWhereNotInWithMultipleSubqueries(): void
-    {
-        $sub_query_1 = $this->mysql_database_wrapper->selectQuery('notes', NoteMockEntity::class)
-            ->select(NoteMockEntity::USER_ID)
-            ->where([NoteMockEntity::TITLE . ' = ' => "'Groceries'"]);
-
-        $sub_query_2 = $this->mysql_database_wrapper->selectQuery('users', UserMockEntity::class)
-            ->select(UserMockEntity::ID)
-            ->where([UserMockEntity::AGE . ' > ' => 20]);
-
-        $this->mysql_select_query_builder
-            ->whereNotIn(UserMockEntity::ID, $sub_query_1)
-            ->whereNotIn(UserMockEntity::ID, $sub_query_2);
-
-        // Test raw
-        $expected_query = 'select * from users where id not  in (select user_id from notes where title =  :0  ) and id not  in (select id from users where age >  :1  )  ';
-        $query = $this->mysql_select_query_builder->getQuery();
-
-        $this->assertEquals($expected_query, $query);
-
-        // Test with values
-        $expected_query = "select * from users where id not  in (select user_id from notes where title =  'Groceries'  ) and id not  in (select id from users where age >  20  )  ";
-        $query = $this->getQueryWithValues();
-
-        $this->assertEquals($expected_query, $query);
-    }
-
-    public function testOr(): void
-    {
-        $this->mysql_select_query_builder
-            ->where([UserMockEntity::ID . ' = ' => 1])
-            ->or([UserMockEntity::AGE . ' > ' => 20]);
-
-        // Test raw
-        $expected_query = 'select * from users where id =  :0 or age >  :1 ';
-        $query = $this->mysql_select_query_builder->getQuery();
-
-        $this->assertEquals($expected_query, $query);
-
-        // Test with values
-        $expected_query = 'select * from users where id =  1 or age >  20 ';
-        $query = $this->getQueryWithValues();
-
-        $this->assertEquals($expected_query, $query);
-    }
-
-    public function testOrWithAnd(): void
-    {
-        $this->mysql_select_query_builder
-            ->where([UserMockEntity::ID . ' = ' => 1])
-            ->or([
-                UserMockEntity::AGE . ' > ' => 20,
-                UserMockEntity::EMAIL_ADDRESS => "'example@test.com'"
-            ]);
-
-        // Test raw
-        $expected_query = 'select * from users where id =  :0 or age >  :1 and email_address :2 ';
-        $query = $this->mysql_select_query_builder->getQuery();
-
-        $this->assertEquals($expected_query, $query);
-
-        // Test with values
-        $expected_query = "select * from users where id =  1 or age >  20 and email_address 'example@test.com' ";
-        $query = $this->getQueryWithValues();
-
-        $this->assertEquals($expected_query, $query);
-    }
-
-    public function testMultipleOrWithAnd(): void
-    {
-        $this->mysql_select_query_builder
-            ->where([UserMockEntity::ID . ' = ' => 1])
-            ->or([
-                UserMockEntity::AGE . ' > ' => 20,
-                UserMockEntity::EMAIL_ADDRESS => "'example@test.com'"
-            ])
-            ->or([
-                UserMockEntity::AGE . ' > ' => 30,
-                UserMockEntity::EMAIL_ADDRESS => "'example_2@test.com'"
-            ]);
-
-        // Test raw
-        $expected_query = 'select * from users where id =  :0 or age >  :1 and email_address :2 or age >  :3 and email_address :4 ';
-        $query = $this->mysql_select_query_builder->getQuery();
-
-        $this->assertEquals($expected_query, $query);
-
-        // Test with values
-        $expected_query = "select * from users where id =  1 or age >  20 and email_address 'example@test.com' or age >  30 and email_address 'example_2@test.com' ";
-        $query = $this->getQueryWithValues();
-
-        $this->assertEquals($expected_query, $query);
-    }
-
-    public function testOrIn(): void
-    {
-        $this->mysql_select_query_builder
-            ->where([UserMockEntity::ID . ' = ' => 1])
-            ->orIn(UserMockEntity::AGE, [20, 30]);
-
-        // Test raw
-        $expected_query = 'select * from users where id =  :0 or age in (:1, :2) ';
-        $query = $this->mysql_select_query_builder->getQuery();
-
-        $this->assertEquals($expected_query, $query);
-
-        // Test with values
-        $expected_query = 'select * from users where id =  1 or age in (20, 30) ';
-        $query = $this->getQueryWithValues();
-
-        $this->assertEquals($expected_query, $query);
-    }
-
-    public function testMultipleOrIn(): void
-    {
-        $this->mysql_select_query_builder
-            ->where([UserMockEntity::ID . ' = ' => 1])
-            ->orIn(UserMockEntity::AGE, [20, 30])
-            ->orIn(UserMockEntity::ID, [2, 3]);
-
-        // Test raw
-        $expected_query = 'select * from users where id =  :0 or age in (:1, :2) or id in (:3, :4) ';
-        $query = $this->mysql_select_query_builder->getQuery();
-
-        $this->assertEquals($expected_query, $query);
-
-        // Test with values
-        $expected_query = 'select * from users where id =  1 or age in (20, 30) or id in (2, 3) ';
-        $query = $this->getQueryWithValues();
-
-        $this->assertEquals($expected_query, $query);
+        $this->assertEquals($expected_query_with_values, $query);
     }
 
     public static function addOrInDataProvider(): array
     {
-        $sub_query = new MySQLDatabaseWrapper(static::createStub(Mysql::class))
-            ->selectQuery('users', UserMockEntity::class)
+        $sub_query_fn = fn () => static::createSelectQueryBuilder('users', UserMockEntity::class)
             ->select(UserMockEntity::ID)
             ->where([UserMockEntity::AGE . ' > ' => 20]);
         return [
             'With array' => [
                 'column_name' => UserMockEntity::AGE,
-                'values' => [20, 30],
+                'values' => fn () => [20, 30],
                 'expected_array' => [[
                     'column' => UserMockEntity::AGE,
                      'values' => [
@@ -429,95 +373,76 @@ class MySQLSelectQueryBuilderTest extends TestCase
             ],
             'With subquery' => [
                 'column_name' => UserMockEntity::AGE,
-                'values' => $sub_query,
+                'values' => $sub_query_fn,
                 'expected_array' => [[
                     'column' => UserMockEntity::AGE,
-                     'values' => $sub_query
+                     'values' => $sub_query_fn()
                 ]]
             ]
         ];
     }
 
     #[DataProvider('addOrInDataProvider')]
-    public function testAddOrIn($column_name, $values, $expected_array): void
+    public function testAddOrIn(string $column_name, callable $values, array $expected_array): void
     {
-        $this->addOrInMethodReflection->invoke(
+        $or_in_method_reflection = new ReflectionMethod(MySQLSelectQueryBuilder::class, 'addOrIn');
+        $or_in_method_reflection->invoke(
             $this->mysql_select_query_builder,
             column_name: $column_name,
-            values: $values
+            values: $values()
         );
 
-        $actual_or_in_conditions = $this->orInConditionsReflection->getValue(
-            $this->mysql_select_query_builder
-        );
+        $or_in_conditions_reflection = new ReflectionProperty(MySQLSelectQueryBuilder::class, 'or_in_conditions');
+        $actual_or_in_conditions = $or_in_conditions_reflection->getValue($this->mysql_select_query_builder);
         $this->assertEquals($expected_array, $actual_or_in_conditions);
     }
 
-
-    public function testAddWhereInWithArray(): void
+    public static function addWhereInDataProvider(): array
     {
-        $this->addWhereInMethodReflection->invoke(
-            $this->mysql_select_query_builder,
-            column_name: UserMockEntity::AGE,
-            values: [20, 30]
-        );
-        $expected_where_in_conditions = [
-            [
-                'column' => UserMockEntity::AGE,
-                 'values' => [
-                    ['value' => 20],
-                    ['value' => 30]
-                ]
-            ]
-        ];
-        $where_in_conditions = $this->whereInConditionsReflection->getValue($this->mysql_select_query_builder);
-
-        $this->assertEquals($expected_where_in_conditions, $where_in_conditions);
-    }
-
-    public function testAddWhereInWithSubquery(): void
-    {
-        $sub_query = $this->mysql_database_wrapper->selectQuery('users', UserMockEntity::class)
-            ->select(UserMockEntity::ID)
-            ->where([UserMockEntity::AGE . ' > ' => 20]);
-
-        $expected_where_in_conditions_with_subquery = [[
+        $expected_where_in_conditions_fn = fn () => [[
             'column' => UserMockEntity::AGE,
-            'values' => $sub_query
+            'values' => [
+                ['value' => 20],
+                ['value' => 30]
+            ]
         ]];
 
-        $this->addWhereInMethodReflection->invoke(
-            $this->mysql_select_query_builder,
-            column_name: UserMockEntity::AGE,
-            values: $sub_query
-        );
+        $where_in_subquery_fn = fn () => static::createSelectQueryBuilder('users', UserMockEntity::class)
+                ->select(UserMockEntity::ID)
+                ->where([UserMockEntity::AGE . ' > ' => 20]);
 
-        $where_in_conditions = $this->whereInConditionsReflection->getValue($this->mysql_select_query_builder);
+        $expected_where_in_conditions_with_subquery_fn = fn () => [[
+            'column' => UserMockEntity::AGE,
+            'values' => $where_in_subquery_fn()
+        ]];
 
-        $this->assertEquals($expected_where_in_conditions_with_subquery, $where_in_conditions);
+        return [
+            'Add where in with array' => [
+                'column_name' => UserMockEntity::AGE,
+                'values' => fn () => [20, 30],
+                'expected_where_in_conditions' => $expected_where_in_conditions_fn
+            ],
+            'Add where in with subquery' => [
+                'column_name' => UserMockEntity::AGE,
+                'values' => $where_in_subquery_fn,
+                'expected_where_in_conditions' => $expected_where_in_conditions_with_subquery_fn
+            ]
+        ];
     }
 
-
-    public function testOrInWithSubquery(): void
+    #[DataProvider('addWhereInDataProvider')]
+    public function testAddwhereIn(string $column_name, callable $values, callable $expected_where_in_conditions): void
     {
-        $sub_query = $this->mysql_database_wrapper->selectQuery('notes', NoteMockEntity::class)
-            ->select(NoteMockEntity::USER_ID)
-            ->where([NoteMockEntity::TITLE . ' = ' => "'Groceries'"]);
-        $this->mysql_select_query_builder
-            ->where([UserMockEntity::ID . ' = ' => 1])
-            ->orIn(UserMockEntity::ID, $sub_query);
+        $add_where_in_method_reflection = new ReflectionMethod(MySQLSelectQueryBuilder::class, 'addWhereIn');
+        $add_where_in_method_reflection->invoke(
+            $this->mysql_select_query_builder,
+            column_name: $column_name,
+            values: $values()
+        );
+        $where_in_conditions_reflection = new ReflectionProperty(MySQLSelectQueryBuilder::class, 'where_in_conditions');
+        $where_in_conditions = $where_in_conditions_reflection->getValue($this->mysql_select_query_builder);
 
-        // Test raw
-        $expected_query = 'select * from users where id =  :0 or id in (select user_id from notes where title =  :1  ) ';
-        $query = $this->mysql_select_query_builder->getQuery();
-
-        $this->assertEquals($expected_query, $query);
-
-        // Test with values
-        $expected_query = 'select * from users where id =  1 or id in (select user_id from notes where title =  \'Groceries\'  ) ';
-        $query = $this->getQueryWithValues();
-
-        $this->assertEquals($expected_query, $query);
+        $this->assertEquals($expected_where_in_conditions(), $where_in_conditions);
     }
 
     public function testClearWhere(): void
@@ -560,7 +485,7 @@ class MySQLSelectQueryBuilderTest extends TestCase
     }
 
     #[DataProvider('getPreparedStatementIndexDataProvider')]
-    public function testGetPreparedStatementIndex($where_array, $expected_index): void
+    public function testGetPreparedStatementIndex(array $where_array, int $expected_index): void
     {
         $this->mysql_select_query_builder
             ->where($where_array)
@@ -571,7 +496,7 @@ class MySQLSelectQueryBuilderTest extends TestCase
 
     public function testGetQueryWithDifferentIndex(): void
     {
-        $index = 10;
+        $index = rand(0, 1000);
         $expected_index = $index + 1;
         $expected_query = "select * from users where id =  :$index  ";
         $query = $this->mysql_select_query_builder
@@ -600,18 +525,34 @@ class MySQLSelectQueryBuilderTest extends TestCase
         $this->assertEquals($expected_query, $query);
     }
 
-    public function testReadyForSubQuery(): void
+    public static function readyForSubQueryDataProvider(): array
     {
-        $this->mysql_select_query_builder->select(UserMockEntity::ID);
-        $this->assertTrue($this->mysql_select_query_builder->readyForSubQuery());
+        $get_query_fn = fn () => static::createSelectQueryBuilder('users', UserMockEntity::class);
+        $get_ready_for_subquery_fn = fn () => $get_query_fn()->select(UserMockEntity::ID);
+        $get_not_ready_for_subquery_fn = fn () => $get_query_fn()->select(UserMockEntity::ID, UserMockEntity::NAME);
+
+        return [
+            'Ready' => [
+                'get_query_builder' => $get_ready_for_subquery_fn,
+                'expected_result' => true
+            ],
+            'Not ready, select all' => [
+                'get_query_builder' => $get_query_fn,
+                'expected_result' => false
+            ],
+            'Not ready, select some' => [
+                'get_query_builder' => $get_not_ready_for_subquery_fn,
+                'expected_result' => false
+            ],
+        ];
     }
 
-    public function testNotReadyForSubQuery(): void
+    #[DataProvider('readyForSubQueryDataProvider')]
+    public function testReadyForSubQuery(callable $get_query_builder, bool $expected_result): void
     {
-        $this->assertFalse($this->mysql_select_query_builder->readyForSubQuery());
-
-        $this->mysql_select_query_builder->select(UserMockEntity::ID, UserMockEntity::NAME);
-        $this->assertFalse($this->mysql_select_query_builder->readyForSubQuery());
+        /** @var MySQLSelectQueryBuilder $query_builder */
+        $query_builder = $get_query_builder();
+        $this->assertEquals($expected_result, $query_builder->readyForSubQuery());
     }
 
     public function testOrQueryFails(): void
@@ -624,23 +565,23 @@ class MySQLSelectQueryBuilderTest extends TestCase
 
     public function testAllOptions(): void
     {
-        $sub_query_1 = $this->mysql_database_wrapper->selectQuery('notes', NoteMockEntity::class)
+        $sub_query_1 = static::createSelectQueryBuilder('notes', NoteMockEntity::class)
             ->select(NoteMockEntity::USER_ID)
             ->where([NoteMockEntity::TITLE . ' = ' => "'Groceries'"]);
 
-        $sub_query_2 = $this->mysql_database_wrapper->selectQuery('users', UserMockEntity::class)
+        $sub_query_2 = static::createSelectQueryBuilder('users', UserMockEntity::class)
             ->select(UserMockEntity::ID)
             ->where([UserMockEntity::AGE . ' > ' => 20, UserMockEntity::PHONE_NUMBER => 123456789]);
 
-        $sub_query_3 = $this->mysql_database_wrapper->selectQuery('notes', NoteMockEntity::class)
+        $sub_query_3 = static::createSelectQueryBuilder('notes', NoteMockEntity::class)
             ->select(NoteMockEntity::USER_ID)
             ->where([NoteMockEntity::TITLE . ' = ' => "'To Do'"]);
 
-        $sub_query_4 = $this->mysql_database_wrapper->selectQuery('users', UserMockEntity::class)
+        $sub_query_4 = static::createSelectQueryBuilder('users', UserMockEntity::class)
             ->select(UserMockEntity::ID)
             ->where([UserMockEntity::AGE . ' > ' => 60]);
 
-        $sub_query_5 = $this->mysql_database_wrapper->selectQuery('notes', NoteMockEntity::class)
+        $sub_query_5 = static::createSelectQueryBuilder('notes', NoteMockEntity::class)
             ->select(NoteMockEntity::USER_ID)
             ->where([NoteMockEntity::TITLE . ' = ' => 'Movies']);
 
