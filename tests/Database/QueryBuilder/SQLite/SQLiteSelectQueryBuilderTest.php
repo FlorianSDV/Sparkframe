@@ -453,7 +453,7 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         $expected_where_in_conditions_fn = function () {
             return [[
                 'column' => UserMockEntity::AGE,
-                 'values' => [
+                'values' => [
                     ['value' => 20],
                     ['value' => 30]
                 ]
@@ -580,18 +580,34 @@ class SQLiteSelectQueryBuilderTest extends TestCase
         $this->assertEquals($expected_query, $query);
     }
 
-    public function testReadyForSubQuery(): void
+    public static function readyForSubQueryDataProvider(): array
     {
-        $this->sqlite_select_query_builder->select(UserMockEntity::ID);
-        $this->assertTrue($this->sqlite_select_query_builder->readyForSubQuery());
+        $get_query_fn = fn () => static::createSelectQueryBuilder('users', UserMockEntity::class);
+        $get_ready_for_subquery_fn = fn () => $get_query_fn()->select(UserMockEntity::ID);
+        $get_not_ready_for_subquery_fn = fn () => $get_query_fn()->select(UserMockEntity::ID, UserMockEntity::NAME);
+
+        return [
+            'Ready' => [
+                'get_query_builder' => $get_ready_for_subquery_fn,
+                'expected_result' => true
+            ],
+            'Not ready, select all' => [
+                'get_query_builder' => $get_query_fn,
+                'expected_result' => false
+            ],
+            'Not ready, select some' => [
+                'get_query_builder' => $get_not_ready_for_subquery_fn,
+                'expected_result' => false
+            ],
+        ];
     }
 
-    public function testNotReadyForSubQuery(): void
+    #[DataProvider('readyForSubQueryDataProvider')]
+    public function testReadyForSubQuery(callable $get_query_builder, bool $expected_result): void
     {
-        $this->assertFalse($this->sqlite_select_query_builder->readyForSubQuery());
-
-        $this->sqlite_select_query_builder->select(UserMockEntity::ID, UserMockEntity::NAME);
-        $this->assertFalse($this->sqlite_select_query_builder->readyForSubQuery());
+        /** @var SQLiteSelectQueryBuilder $query_builder */
+        $query_builder = $get_query_builder();
+        $this->assertEquals($expected_result, $query_builder->readyForSubQuery());
     }
 
     public function testOrQueryFails(): void
