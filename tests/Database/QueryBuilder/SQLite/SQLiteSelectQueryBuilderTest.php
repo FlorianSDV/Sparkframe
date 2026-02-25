@@ -18,35 +18,10 @@ use Sparkframe\Tests\Mocks\Entities\UserMockEntity;
 class SQLiteSelectQueryBuilderTest extends TestCase
 {
     private SQLiteSelectQueryBuilder $sqlite_select_query_builder;
-    private SqliteDatabaseWrapper $sqlite_database_wrapper;
-    private ReflectionMethod $addOrInMethodReflection;
-    private ReflectionMethod $addWhereInMethodReflection;
-    private ReflectionProperty $orInConditionsReflection;
-    private ReflectionProperty $whereInConditionsReflection;
 
     public function setUp(): void
     {
-        $this->sqlite_database_wrapper = new SqliteDatabaseWrapper($this->createStub(Sqlite::class));
         $this->sqlite_select_query_builder = static::createSelectQueryBuilder('users', UserMockEntity::class);
-
-        $this->addOrInMethodReflection = new ReflectionMethod(
-            $this->sqlite_select_query_builder,
-            'addOrIn'
-        );
-        $this->addWhereInMethodReflection = new ReflectionMethod(
-            $this->sqlite_select_query_builder,
-            'addWhereIn'
-        );
-
-        $this->orInConditionsReflection = new ReflectionProperty(
-            $this->sqlite_select_query_builder,
-            'or_in_conditions'
-        );
-
-        $this->whereInConditionsReflection = new ReflectionProperty(
-            $this->sqlite_select_query_builder,
-            'where_in_conditions'
-        );
     }
 
     public static function createSelectQueryBuilder(string $table_name, string $entity_class): SQLiteSelectQueryBuilder
@@ -433,13 +408,15 @@ class SQLiteSelectQueryBuilderTest extends TestCase
     #[DataProvider('addOrInDataProvider')]
     public function testAddOrIn($column_name, $values, $expected_array): void
     {
-        $this->addOrInMethodReflection->invoke(
+        $add_or_in_method_reflection = new ReflectionMethod(SQLiteSelectQueryBuilder::class, 'addOrIn');
+        $add_or_in_method_reflection->invoke(
             $this->sqlite_select_query_builder,
             column_name: $column_name,
             values: $values
         );
 
-        $actual_or_in_conditions = $this->orInConditionsReflection->getValue(
+        $or_in_conditions_reflection = new ReflectionProperty(SQLiteSelectQueryBuilder::class, 'or_in_conditions');
+        $actual_or_in_conditions = $or_in_conditions_reflection->getValue(
             $this->sqlite_select_query_builder
         );
         $this->assertEquals($expected_array, $actual_or_in_conditions);
@@ -620,23 +597,23 @@ class SQLiteSelectQueryBuilderTest extends TestCase
 
     public function testAllOptions(): void
     {
-        $sub_query_1 = $this->sqlite_database_wrapper->selectQuery('notes', NoteMockEntity::class)
+        $sub_query_1 = static::createSelectQueryBuilder('notes', NoteMockEntity::class)
             ->select(NoteMockEntity::USER_ID)
             ->where([NoteMockEntity::TITLE . ' = ' => "'Groceries'"]);
 
-        $sub_query_2 = $this->sqlite_database_wrapper->selectQuery('users', UserMockEntity::class)
+        $sub_query_2 = static::createSelectQueryBuilder('users', UserMockEntity::class)
             ->select(UserMockEntity::ID)
             ->where([UserMockEntity::AGE . ' > ' => 20, UserMockEntity::PHONE_NUMBER => 123456789]);
 
-        $sub_query_3 = $this->sqlite_database_wrapper->selectQuery('notes', NoteMockEntity::class)
+        $sub_query_3 = static::createSelectQueryBuilder('notes', NoteMockEntity::class)
             ->select(NoteMockEntity::USER_ID)
             ->where([NoteMockEntity::TITLE . ' = ' => "'To Do'"]);
 
-        $sub_query_4 = $this->sqlite_database_wrapper->selectQuery('users', UserMockEntity::class)
+        $sub_query_4 = static::createSelectQueryBuilder('users', UserMockEntity::class)
             ->select(UserMockEntity::ID)
             ->where([UserMockEntity::AGE . ' > ' => 60]);
 
-        $sub_query_5 = $this->sqlite_database_wrapper->selectQuery('notes', NoteMockEntity::class)
+        $sub_query_5 = static::createSelectQueryBuilder('notes', NoteMockEntity::class)
             ->select(NoteMockEntity::USER_ID)
             ->where([NoteMockEntity::TITLE . ' = ' => 'Movies']);
 
