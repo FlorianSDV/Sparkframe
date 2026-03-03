@@ -371,8 +371,6 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
             $hydrated_result[] = new $entity_class($row);
         }
 
-        $this->cleanUp();
-
         return $hydrated_result;
     }
 

@@ -73,6 +73,21 @@ class MySQLSelectQueryBuilderTest extends TestCase
         $this->assertEquals($expected_query, $query);
     }
 
+    #[DataProvider('selectDataProvider')]
+    public function testSelectQueryIsAtomic(array $column_names, string $expected_query)
+    {
+        $query = $this->mysql_select_query_builder
+            ->select(...$column_names)
+            ->getQuery();
+
+        $this->assertEquals($expected_query, $query);
+
+        $query = $this->mysql_select_query_builder
+            ->getQuery();
+
+        $this->assertEquals($expected_query, $query);
+    }
+
     public function testLimit(): void
     {
         $expected_query = 'select * from users    limit 10';
