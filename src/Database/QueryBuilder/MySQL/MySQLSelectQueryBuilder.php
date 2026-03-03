@@ -42,7 +42,7 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
     /**
      * @throws Exception
      */
-    public function where(array $filter_criteria): self
+    public function where(array $filter_criteria): MySQLSelectQueryBuilder
     {
         foreach ($filter_criteria as $expression => $filter_criterion) {
             if (!is_string($expression)) {
@@ -57,7 +57,7 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         return $this;
     }
 
-    public function or(array $filter_criteria): self
+    public function or(array $filter_criteria): MySQLSelectQueryBuilder
     {
         if (count($this->where_conditions) == 0 && count($this->where_in_conditions) == 0) {
             throw new Exception('Cannot use or without where conditions!');
@@ -78,14 +78,14 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         return $this;
     }
 
-    public function orIn(string $column_name, SelectQueryBuilderInterface|array $values): SelectQueryBuilderInterface
+    public function orIn(string $column_name, SelectQueryBuilderInterface|array $values): MySQLSelectQueryBuilder
     {
         $this->addOrIn($column_name, $values);
 
         return $this;
     }
 
-    public function orNotIn(string $column_name, SelectQueryBuilderInterface|array $values): SelectQueryBuilderInterface
+    public function orNotIn(string $column_name, SelectQueryBuilderInterface|array $values): MySQLSelectQueryBuilder
     {
         $this->addOrIn($column_name . ' not ', $values);
 
@@ -115,14 +115,14 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         }
     }
 
-    public function whereIn(string $column_name, SelectQueryBuilderInterface|array $values): self
+    public function whereIn(string $column_name, SelectQueryBuilderInterface|array $values): MySQLSelectQueryBuilder
     {
         $this->addWhereIn($column_name, $values);
 
         return $this;
     }
 
-    public function whereNotIn(string $column_name, SelectQueryBuilderInterface|array $values): self
+    public function whereNotIn(string $column_name, SelectQueryBuilderInterface|array $values): MySQLSelectQueryBuilder
     {
         $this->addWhereIn($column_name . ' not ', $values);
 
