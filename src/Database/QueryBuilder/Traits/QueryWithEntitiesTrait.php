@@ -18,7 +18,7 @@ trait QueryWithEntitiesTrait
     /**
      * @throws Exception
      */
-    public function addEntity(Entity $entity): self
+    public function addEntity(Entity $entity): static
     {
         $class_name = $entity::class;
 
@@ -30,10 +30,8 @@ trait QueryWithEntitiesTrait
         return $this;
     }
 
-    public function clearEntities(): self
+    public function clearEntities(): void
     {
         unset($this->entities);
-
-        return $this;
     }
 }

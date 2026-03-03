@@ -11,21 +11,21 @@ interface SelectQueryBuilderInterface extends QueryBuilderInterface
     /**
      * @param string ...$column_names any number of column names
      */
-    public function select(string ...$column_names): self;
+    public function select(string ...$column_names): SelectQueryBuilderInterface;
 
-    public function limit(int $limit_amount): self;
+    public function limit(int $limit_amount): SelectQueryBuilderInterface;
 
-    public function where(array $filter_criteria): self;
+    public function where(array $filter_criteria): SelectQueryBuilderInterface;
 
-    public function whereIn(string $column_name, SelectQueryBuilderInterface|array $values): self;
+    public function whereIn(string $column_name, SelectQueryBuilderInterface|array $values): SelectQueryBuilderInterface;
 
-    public function whereNotIn(string $column_name, SelectQueryBuilderInterface|array $values): self;
+    public function whereNotIn(string $column_name, SelectQueryBuilderInterface|array $values): SelectQueryBuilderInterface;
 
-    public function or(array $filter_criteria): self;
+    public function or(array $filter_criteria): SelectQueryBuilderInterface;
 
-    public function orIn(string $column_name, SelectQueryBuilderInterface|array $values): self;
+    public function orIn(string $column_name, SelectQueryBuilderInterface|array $values): SelectQueryBuilderInterface;
 
-    public function orNotIn(string $column_name, SelectQueryBuilderInterface|array $values): self;
+    public function orNotIn(string $column_name, SelectQueryBuilderInterface|array $values): SelectQueryBuilderInterface;
 
     public function getPreparedStatementIndex(): int;
 

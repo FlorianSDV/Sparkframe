@@ -14,11 +14,7 @@ interface QueryWithEntitiesInterface
     /**
      * Adds an entity to the query.
      */
-    public function addEntity(Entity $entity): InsertQueryBuilderInterface |
-    UpdateQueryBuilderInterface |
-    DeleteQueryBuilderInterface;
+    public function addEntity(Entity $entity): QueryWithEntitiesInterface;
 
-    public function clearEntities(): InsertQueryBuilderInterface |
-    UpdateQueryBuilderInterface |
-    DeleteQueryBuilderInterface;
+    public function clearEntities(): void;
 }
