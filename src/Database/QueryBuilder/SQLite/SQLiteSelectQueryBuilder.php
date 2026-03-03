@@ -26,21 +26,21 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
     {
     }
 
-    public function whereIn(string $column_name, SelectQueryBuilderInterface|array $values): self
+    public function whereIn(string $column_name, SelectQueryBuilderInterface|array $values): SQLiteSelectQueryBuilder
     {
         $this->addWhereIn($column_name, $values);
 
         return $this;
     }
 
-    public function whereNotIn(string $column_name, SelectQueryBuilderInterface|array $values): self
+    public function whereNotIn(string $column_name, SelectQueryBuilderInterface|array $values): SQLiteSelectQueryBuilder
     {
         $this->addWhereIn($column_name . ' not ', $values);
 
         return $this;
     }
 
-    public function or(array $filter_criteria): self
+    public function or(array $filter_criteria): SQLiteSelectQueryBuilder
     {
         if (count($this->where_conditions) == 0 && count($this->where_in_conditions) == 0) {
             throw new Exception('Cannot use or without where conditions!');
@@ -61,14 +61,14 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
         return $this;
     }
 
-    public function orIn(string $column_name, SelectQueryBuilderInterface|array $values): self
+    public function orIn(string $column_name, SelectQueryBuilderInterface|array $values): SQLiteSelectQueryBuilder
     {
         $this->addOrIn($column_name, $values);
 
         return $this;
     }
 
-    public function orNotIn(string $column_name, SelectQueryBuilderInterface|array $values): self
+    public function orNotIn(string $column_name, SelectQueryBuilderInterface|array $values): SQLiteSelectQueryBuilder
     {
         $this->addOrIn($column_name . ' not ', $values);
 
@@ -114,7 +114,7 @@ class SQLiteSelectQueryBuilder implements SelectQueryBuilderInterface
     /**
      * @throws Exception
      */
-    public function where(array $filter_criteria): self
+    public function where(array $filter_criteria): SQLiteSelectQueryBuilder
     {
         foreach ($filter_criteria as $expression => $filter_criterion) {
             if (!is_string($expression)) {
