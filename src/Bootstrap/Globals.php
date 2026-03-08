@@ -17,7 +17,7 @@ class Globals
      * @var DatabaseWrapperInterface[]
      */
     private static array $databases;
-    private Router $router;
+    private static bool $initialized = false;
 
     /**
      * @var Controller[]
@@ -38,8 +38,15 @@ class Globals
 
     public function initialize(string $root_dir): void
     {
+        // Initialize once
+        if (static::$initialized) {
+            return;
+        }
+
         self::$root_dir = $root_dir;
         $this->loadEnv();
+
+        static::$initialized = true;
     }
 
     public static function getRootdir(): string
