@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Sparkframe\Bootstrap;
 
-session_start();
-
-require_once __DIR__ . '/../../vendor/autoload.php';
-
 use Exception;
 use Sparkframe\Database\BaseDatabaseInfoCollection;
 use Sparkframe\Database\DatabaseWrapperFactory;
@@ -39,6 +35,11 @@ abstract class BaseBootstrapper
         }
 
         return self::$instance;
+    }
+
+    public function startSession(): void
+    {
+        session_start();
     }
 
     public function initializeGlobals(string $root_dir): void
