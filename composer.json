@@ -26,6 +26,7 @@
         }
     ],
     "require": {
+        "php": ">=8.4.18",
         "ext-pdo": "*"
     },
     "require-dev": {
