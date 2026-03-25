@@ -95,6 +95,9 @@ abstract class BaseBootstrapper
 
     protected function setupControllers(): void
     {
+        if (!static::$globals_initialized) {
+            throw new Exception("Not allowed to set up controllers before initializing globals.");
+        }
         $globals = Globals::getInstance();
         $globals->initializeControllers();
     }
