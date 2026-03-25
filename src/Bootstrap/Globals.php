@@ -17,7 +17,7 @@ class Globals
      * @var DatabaseWrapperInterface[]
      */
     private static array $databases;
-    private Router $router;
+    private static bool $initialized = false;
 
     /**
      * @var Controller[]
@@ -38,8 +38,15 @@ class Globals
 
     public function initialize(string $root_dir): void
     {
+        // Initialize once
+        if (static::$initialized) {
+            return;
+        }
+
         self::$root_dir = $root_dir;
         $this->loadEnv();
+
+        static::$initialized = true;
     }
 
     public static function getRootdir(): string
@@ -58,6 +65,10 @@ class Globals
 
     public function initializeControllers(): void
     {
+        if (!isset(self::$root_dir)) {
+            throw new Exception('Cannot initialize controllers before setting root dir');
+        }
+
         $controllers_dir = self::$root_dir . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'Controller';
 
         foreach (glob($controllers_dir . DIRECTORY_SEPARATOR . '*.php') as $file) {
@@ -70,7 +81,7 @@ class Globals
             $fullClass = 'App\\Controller\\' . $className;
 
             if (!class_exists($fullClass)) {
-                throw new \RuntimeException("Class $fullClass not found. Composer autoloading correct ingesteld?");
+                throw new \RuntimeException("Class $fullClass not found. Is Composer autoloading configured correctly?");
             }
 
             $controller = new $fullClass();
