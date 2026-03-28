@@ -14,7 +14,7 @@ interface QueryWithEntitiesInterface
     /**
      * Adds an entity to the query.
      */
-    public function addEntity(Entity $entity): QueryWithEntitiesInterface;
+    public function addEntity(Entity $entity): static;
 
     public function clearEntities(): void;
 }
