@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Sparkframe\Bootstrap;
 
+require_once __DIR__ . '/../../vendor/autoload.php';
+use Dotenv\Dotenv;
 use Exception;
 use Sparkframe\Controller\Controller;
 use Sparkframe\Database\DatabaseWrapperInterface;
@@ -44,7 +46,8 @@ class Globals
         }
 
         self::$root_dir = $root_dir;
-        $this->loadEnv();
+        $dotenv = Dotenv::createImmutable(self::$root_dir);
+        $dotenv->load();
 
         static::$initialized = true;
     }
@@ -113,29 +116,6 @@ class Globals
         }
 
         return self::$controllers[$controllerName];
-    }
-
-    private function loadEnv(): void
-    {
-        $env_filepath = self::$root_dir . DIRECTORY_SEPARATOR . '.env';
-
-        if (is_readable($env_filepath)) {
-            $lines = file($env_filepath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-
-            foreach ($lines as $line) {
-                $line = trim($line);
-
-                if ($line === '' || str_starts_with($line, '#') || str_starts_with($line, '/')) {
-                    continue;
-                }
-
-                putenv($line);
-
-                [$key, $value] = explode('=', $line, 2);
-                $_ENV[$key] = $value;
-                $_SERVER[$key] = $value;
-            }
-        }
     }
 
     public static function addDatabaseWrapper(string $database_name, DatabaseWrapperInterface $databaseWrapper): void
