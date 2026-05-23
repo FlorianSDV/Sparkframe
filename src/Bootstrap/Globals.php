@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Sparkframe\Bootstrap;
 
-require_once __DIR__ . '/../../vendor/autoload.php';
 use Dotenv\Dotenv;
 use Exception;
 use Sparkframe\Controller\Controller;
