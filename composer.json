@@ -1,6 +1,5 @@
 {
     "name": "floriansdv/sparkframe",
-    "version": "dev-master",
     "description": "A simple framework to help you get started with creating personal projects",
     "type": "library",
     "license": "MIT",
