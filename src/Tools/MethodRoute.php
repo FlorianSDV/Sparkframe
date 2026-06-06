@@ -11,6 +11,8 @@ class MethodRoute
      */
     private array $uri;
 
+    private string $uri_string;
+
     /**
      * @var int|string[]
      */
@@ -22,6 +24,12 @@ class MethodRoute
         private readonly string $method_name
     ) {
         $this->uri = explode('/', $uri);
+        $this->uri_string = $uri;
+    }
+
+    public function getUriString(): string
+    {
+        return $this->uri_string;
     }
 
     public function getController(): string
