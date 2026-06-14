@@ -13,5 +13,10 @@ interface QueryWithEntitiesInterface
      */
     public function addEntity(Entity $entity): static;
 
+    /**
+     * Adds multiple entities to the query.
+     */
+    public function addEntities(array $entities): static;
+
     public function clearEntities(): void;
 }
