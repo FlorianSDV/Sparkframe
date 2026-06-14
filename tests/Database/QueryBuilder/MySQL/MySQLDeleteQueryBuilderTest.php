@@ -46,10 +46,12 @@ class MySQLDeleteQueryBuilderTest extends TestCase
     }
 
     #[DataProvider('mockEntityProvider')]
-    public function testDeleteQuery(array $mock_entities): void
+    public function testDeleteQuery(UserMockEntity|array $mock_entities): void
     {
-        foreach ($mock_entities as $mock_entity) {
-            $this->mysql_delete_query_builder->addEntity($mock_entity);
+        if (count($mock_entities) > 1) {
+            $this->mysql_delete_query_builder->addEntities($mock_entities);
+        } else {
+            $this->mysql_delete_query_builder->addEntity($mock_entities[0]);
         }
 
         $p_key_name = UserMockEntity::getPrimaryKeyColumnName();
@@ -64,15 +66,18 @@ class MySQLDeleteQueryBuilderTest extends TestCase
     }
 
     #[DataProvider('mockEntityProvider')]
-    public function testDeleteQueryWithValues(array $mock_entities): void
+    public function testDeleteQueryWithValues(UserMockEntity|array $mock_entities): void
     {
         $p_key_name = UserMockEntity::getPrimaryKeyColumnName();
 
         $primaryKeysValues = [];
 
-        foreach ($mock_entities as $mock_entity) {
-            $this->mysql_delete_query_builder->addEntity($mock_entity);
-            $primaryKeysValues[] = (string)$mock_entity->$p_key_name;
+        if (is_array($mock_entities)) {
+            $this->mysql_delete_query_builder->addEntities($mock_entities);
+            $primaryKeysValues = array_map(fn ($mock_entity) => (string) $mock_entity->$p_key_name, $mock_entities);
+        } else {
+            $this->mysql_delete_query_builder->addEntity($mock_entities);
+            $primaryKeysValues = (string) $mock_entities->$p_key_name;
         }
 
         $query = new ReflectionMethod(MySQLDeleteQueryBuilder::class, 'getQuery')
