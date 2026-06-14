@@ -30,6 +30,15 @@ trait QueryWithEntitiesTrait
         return $this;
     }
 
+    public function addEntities(array $entities): static
+    {
+        foreach ($entities as $entity) {
+            $this->addEntity($entity);
+        }
+
+        return $this;
+    }
+
     public function clearEntities(): void
     {
         unset($this->entities);
