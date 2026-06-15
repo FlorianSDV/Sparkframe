@@ -13,6 +13,7 @@ class Globals
 {
     private static Globals $instance;
     private static string $root_dir;
+    private static string $controllers_dir;
 
     /**
      * @var DatabaseWrapperInterface[]
@@ -37,7 +38,7 @@ class Globals
         return self::$instance;
     }
 
-    public function initialize(string $root_dir): void
+    public function initialize(string $root_dir, string $controllers_dir): void
     {
         // Initialize once
         if (static::$initialized) {
@@ -45,6 +46,7 @@ class Globals
         }
 
         self::$root_dir = $root_dir;
+        self::$controllers_dir = $controllers_dir;
         $dotenv = Dotenv::createImmutable(self::$root_dir);
         $dotenv->load();
 
@@ -67,13 +69,11 @@ class Globals
 
     public function initializeControllers(): void
     {
-        if (!isset(self::$root_dir)) {
-            throw new Exception('Cannot initialize controllers before setting root dir');
+        if (!isset(self::$controllers_dir)) {
+            throw new Exception('Cannot initialize controllers before setting controllers dir');
         }
 
-        $controllers_dir = self::$root_dir . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'Controller';
-
-        foreach (glob($controllers_dir . DIRECTORY_SEPARATOR . '*.php') as $file) {
+        foreach (glob(self::$controllers_dir . DIRECTORY_SEPARATOR . '*.php') as $file) {
             $className = basename($file, '.php');
 
             if ($className === 'BaseController') {
