@@ -1,0 +1,33 @@
+{
+    "name": "Sparkframe",
+    "image": "sparkframe:latest",
+    "build": {
+        "dockerfile": "../Dockerfile",
+        "context": ".."
+    },
+    "runArgs": [
+        "--name=sparkframe-devcontainer"
+    ],
+    "containerEnv": {
+        "XDEBUG_MODE": "debug,develop",
+        "XDEBUG_CONFIG": "client_port=9003 start_with_request=yes idekey=VSCODE"
+    },
+    "mounts": [
+        "type=volume,source=sparkframe_vendor,target=/var/www/html/vendor"
+    ],
+    "workspaceMount": "type=bind,source=${localWorkspaceFolder},target=/var/www/html",
+    "workspaceFolder": "/var/www/html",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "xdebug.php-debug",
+                "bmewburn.vscode-intelephense-client",
+                "ikappas.composer"
+            ]
+        }
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/git:1": {}
+    },
+    "postCreateCommand": "git config --global --add safe.directory /var/www/html"
+}
