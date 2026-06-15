@@ -1,12 +1,12 @@
 {
     "name": "Sparkframe",
+    "image": "sparkframe:latest",
     "build": {
         "dockerfile": "../Dockerfile",
         "context": ".."
     },
     "runArgs": [
-        "--name",
-        "sparkframe-devcontainer"
+        "--name=sparkframe-devcontainer"
     ],
     "containerEnv": {
         "XDEBUG_MODE": "debug,develop",
