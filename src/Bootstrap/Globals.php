@@ -6,6 +6,7 @@ namespace Sparkframe\Bootstrap;
 
 use Dotenv\Dotenv;
 use Exception;
+use ReflectionClass;
 use Sparkframe\Controller\Controller;
 use Sparkframe\Database\DatabaseWrapperInterface;
 
@@ -76,14 +77,14 @@ class Globals
         foreach (glob(self::$controllers_dir . DIRECTORY_SEPARATOR . '*.php') as $file) {
             $className = basename($file, '.php');
 
-            if ($className === 'BaseController') {
-                continue;
-            }
-
             $fullClass = 'App\\Controller\\' . $className;
 
             if (!class_exists($fullClass)) {
                 throw new \RuntimeException("Class $fullClass not found. Is Composer autoloading configured correctly?");
+            }
+
+            if (new ReflectionClass($fullClass)->isAbstract()) {
+                continue;
             }
 
             $controller = new $fullClass();
