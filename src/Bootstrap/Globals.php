@@ -123,8 +123,14 @@ class Globals
         static::$databases[$database_name] = $databaseWrapper;
     }
 
+    /**
+     * @throws Exception
+     */
     public static function getDatabaseWrapper(string $database_name): ?DatabaseWrapperInterface
     {
+        if (!isset(static::$databases[$database_name])) {
+            throw new Exception("Database with name: $database_name not found!", 500);
+        }
         return static::$databases[$database_name];
     }
 }
