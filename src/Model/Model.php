@@ -14,24 +14,23 @@ use Sparkframe\Database\QueryBuilder\Builders\UpdateQueryBuilderInterface;
 
 class Model
 {
-    protected ?DatabaseWrapperInterface $database_wrapper = null;
+    protected DatabaseWrapperInterface $database_wrapper;
     protected const string TABLE_NAME = '';
 
+    /**
+     * @return void
+     */
     public function __construct(protected string $entity_class, ?string $database_name = null)
     {
-        $this->database_wrapper = null;
-
-        if ($database_name !== null) {
-            $this->database_wrapper = Globals::getDatabaseWrapper($database_name);
-        }
+        $this->database_wrapper = Globals::getDatabaseWrapper($database_name);
     }
 
-    private function assertReadyForQuery(): bool
-    {
-        $database_wrapper_correct = $this->database_wrapper instanceof DatabaseWrapperInterface;
-        $table_name_set = $this::TABLE_NAME !== '';
 
-        return $database_wrapper_correct && $table_name_set;
+    private function assertReadyForQuery(): void
+    {
+        if ($this::TABLE_NAME === '') {
+            throw new Exception('Cannot create querybuilder if TABLE_NAME on ' . $this::class . ' is not set.', 500);
+        }
     }
 
     /**
@@ -39,9 +38,7 @@ class Model
      */
     public function selectQuery(): SelectQueryBuilderInterface
     {
-        if (!$this->assertReadyForQuery()) {
-            throw new Exception('Cannot create query without database connection');
-        }
+        $this->assertReadyForQuery();
 
         return $this->database_wrapper->selectQuery($this::TABLE_NAME, $this->entity_class);
     }
@@ -51,9 +48,7 @@ class Model
      */
     public function insertQuery(): InsertQueryBuilderInterface
     {
-        if (!$this->assertReadyForQuery()) {
-            throw new Exception('Cannot create query without database connection');
-        }
+        $this->assertReadyForQuery();
 
         return $this->database_wrapper->insertQuery($this::TABLE_NAME, $this->entity_class);
     }
@@ -63,18 +58,14 @@ class Model
      */
     public function updateQuery(): UpdateQueryBuilderInterface
     {
-        if (!$this->assertReadyForQuery()) {
-            throw new Exception('Cannot create query without database connection');
-        }
+        $this->assertReadyForQuery();
 
         return $this->database_wrapper->updateQuery($this::TABLE_NAME, $this->entity_class);
     }
 
     public function deleteQuery(): DeleteQueryBuilderInterface
     {
-        if (!$this->assertReadyForQuery()) {
-            throw new Exception('Cannot create query without database connection');
-        }
+        $this->assertReadyForQuery();
 
         return $this->database_wrapper->deleteQuery($this::TABLE_NAME, $this->entity_class);
     }
