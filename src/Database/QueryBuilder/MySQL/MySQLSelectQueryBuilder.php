@@ -8,20 +8,38 @@ use Exception;
 use PDO;
 use Sparkframe\Database\QueryBuilder\Builders\SelectQueryBuilderInterface;
 use Sparkframe\Database\QueryBuilder\Traits\QueryBuilderTrait;
+use Sparkframe\Entity\Entity;
 use Sparkframe\Exceptions\IncorrectSubquerySelectException;
 
+/**
+ * A QueryBuilder class for creating select queries.
+ */
 class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
 {
     use QueryBuilderTrait;
 
+    /** @property string[] $select_columns */
     protected array $select_columns = ['*'];
+
     protected int|null $limit_amount = null;
+
+    /** @property array<string, mixed> $where_conditions */
     protected array $where_conditions = [];
+
+    /** @property array<string, array<mixed>|SelectQueryBuilderInterface> $where_in_conditions */
     protected array $where_in_conditions = [];
+
+    /** @property array<string, mixed> $or_conditions */
     protected array $or_conditions = [];
+
+    /** @property array<string, array<mixed>|SelectQueryBuilderInterface> $where_in_conditions */
     protected array $or_in_conditions = [];
+
     protected int $prepared_statement_index = 0;
 
+    /**
+     * @param class-string<Entity> $entity_class
+     */
     public function __construct(protected PDO $PDO, protected string $target_table_name, protected string $entity_class)
     {
     }
@@ -57,6 +75,9 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         return $this;
     }
 
+    /**
+     * @throws Exception
+     */
     public function or(array $filter_criteria): MySQLSelectQueryBuilder
     {
         if (count($this->where_conditions) == 0 && count($this->where_in_conditions) == 0) {
@@ -78,6 +99,9 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         return $this;
     }
 
+    /**
+     * @throws IncorrectSubquerySelectException If a subquery does not have exactly one column in the SELECT clause.
+     */
     public function orIn(string $column_name, SelectQueryBuilderInterface|array $values): MySQLSelectQueryBuilder
     {
         $this->addOrIn($column_name, $values);
@@ -85,6 +109,9 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         return $this;
     }
 
+    /**
+     * @throws IncorrectSubquerySelectException If a subquery does not have exactly one column in the SELECT clause.
+     */
     public function orNotIn(string $column_name, SelectQueryBuilderInterface|array $values): MySQLSelectQueryBuilder
     {
         $this->addOrIn($column_name . ' not ', $values);
@@ -92,6 +119,9 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         return $this;
     }
 
+    /**
+     * @throws IncorrectSubquerySelectException If a subquery does not have exactly one column in the SELECT clause.
+     */
     protected function addOrIn(string $column_name, SelectQueryBuilderInterface|array $values): void
     {
         if (is_array($values) && !empty($values)) {
@@ -115,6 +145,9 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         }
     }
 
+    /**
+     * @throws IncorrectSubquerySelectException If a subquery does not have exactly one column in the SELECT clause.
+     */
     public function whereIn(string $column_name, SelectQueryBuilderInterface|array $values): MySQLSelectQueryBuilder
     {
         $this->addWhereIn($column_name, $values);
@@ -122,6 +155,9 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         return $this;
     }
 
+    /**
+     * @throws IncorrectSubquerySelectException If a subquery does not have exactly one column in the SELECT clause.
+     */
     public function whereNotIn(string $column_name, SelectQueryBuilderInterface|array $values): MySQLSelectQueryBuilder
     {
         $this->addWhereIn($column_name . ' not ', $values);
@@ -129,6 +165,9 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         return $this;
     }
 
+    /**
+     * @throws IncorrectSubquerySelectException If a subquery does not have exactly one column in the SELECT clause.
+     */
     protected function addWhereIn(string $column_name, MySQLSelectQueryBuilder|array $values): void
     {
         if (is_array($values) && !empty($values)) {
@@ -151,6 +190,10 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         }
     }
 
+    /**
+     * Checks if this query can be used as a subquery.
+     * @return bool Returns True if there is exactly one value in the SELECT clause.
+     */
     public function readyForSubQuery(): bool
     {
         $count = count($this->select_columns) === 1;
@@ -159,6 +202,11 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         return $count && $not_select_all;
     }
 
+    /**
+     * Generates the WHERE part of the query string.
+     * Also generates the query strings of the subqueries.
+     * @return string
+     */
     protected function getPreparedWherePart(): string
     {
         if (count($this->where_conditions) == 0 && count($this->where_in_conditions) == 0) {
@@ -196,6 +244,12 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         return $where_part;
     }
 
+    /**
+     * Generates an arrayfor the WHERE clauses where the keys are the prepared statements in the sql query string.
+     * The values will be inserted by PDO.
+     * Also generates the prepared statements of the subqueries.
+     * @return array
+     */
     protected function getPreparedWherePartStatements(): array
     {
         if (count($this->where_conditions) == 0 && count($this->where_in_conditions) == 0) {
@@ -224,6 +278,11 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         return $prepared_statements;
     }
 
+    /**
+     * Generates the OR part of the query string.
+     * Also generates the query strings of the subqueries.
+     * @return string
+     */
     protected function getPreparedOrPart(): string
     {
         $empty_where_part = count($this->where_conditions) == 0 && count($this->where_in_conditions) == 0;
@@ -273,6 +332,12 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         return $or_part;
     }
 
+    /**
+     * Generates an array for the OR clauses where the keys are the prepared statements in the sql query string.
+     * The values will be inserted by PDO.
+     * Also generates the prepared statements of the subqueries.
+     * @return array
+     */
     protected function getPreparedOrPartStatements(): array
     {
         if (count($this->or_conditions) == 0 && count($this->or_in_conditions) == 0) {
@@ -302,6 +367,12 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         return $prepared_statements;
     }
 
+    /**
+     * Generates an array for the OR and WHERE clauses where the keys are the prepared statements in the sql query string.
+     * The values will be inserted by PDO.
+     * Also generates the prepared statements of the subqueries.
+     * @return array
+     */
     public function getPreparedStatements(): array
     {
         $prepared_where_statements = $this->getPreparedWherePartStatements();
@@ -310,12 +381,18 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         return array_merge($prepared_where_statements, $prepared_or_statements);
     }
 
+    /**
+     * Clears the WHERE clauses of this query.
+     */
     public function clearWhere(): void
     {
         $this->where_conditions = [];
         $this->where_in_conditions = [];
     }
 
+    /**
+     * Clears the OR clauses of this query.
+     */
     public function clearOr(): void
     {
         $this->or_conditions = [];
@@ -323,6 +400,10 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
     }
 
     /**
+     * Returns the query string with prepared statements.
+     * @param int $prepared_statement_index Sets where the prepared statements start.
+     *  Use this if you don't want to start at 0.
+     * @return string The query string.
      * @throws Exception
      */
     public function getQuery(int $prepared_statement_index = 0): string
@@ -341,7 +422,7 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
      * Generates the select part string of the query.
      * DOES NOT PREVENT SQL INJECTION! ONLY USE YOUR OWN VALUES!
      */
-    public function getSelectPart(): string
+    protected function getSelectPart(): string
     {
         return 'select ' . implode(', ', $this->select_columns) . ' ';
     }
@@ -381,7 +462,11 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         return $this;
     }
 
-    private function getLimitPart(): string
+    /**
+     * Generates the limit part string of the query.
+     * @return string The limit part string.
+     */
+    protected function getLimitPart(): string
     {
         if ($this->limit_amount == null) {
             return '';
@@ -390,11 +475,17 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         return " limit $this->limit_amount";
     }
 
+    /**
+     * @return int The current index of the prepared statements.
+     */
     public function getPreparedStatementIndex(): int
     {
         return $this->prepared_statement_index;
     }
 
+    /**
+     * Cleans up the query builder so it can be reused.
+     */
     public function cleanUp(): void
     {
         $this->select_columns = ['*'];

@@ -10,6 +10,7 @@ interface SelectQueryBuilderInterface extends QueryBuilderInterface
 {
     /**
      * Specifies the columns to select.
+     * DOES NOT PREVENT SQL INJECTION! ONLY USE YOUR OWN VALUES!
      * @param string ...$column_names any number of column names
      */
     public function select(string ...$column_names): SelectQueryBuilderInterface;
