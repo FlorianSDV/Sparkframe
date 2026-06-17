@@ -7,6 +7,9 @@ namespace Sparkframe\Database;
 use Exception;
 use Pdo;
 
+/**
+ * Factory for creating database wrappers from connection info.
+ */
 class DatabaseWrapperFactory
 {
     /**

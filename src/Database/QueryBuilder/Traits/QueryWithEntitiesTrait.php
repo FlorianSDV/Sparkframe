@@ -7,11 +7,11 @@ namespace Sparkframe\Database\QueryBuilder\Traits;
 use Exception;
 use Sparkframe\Entity\Entity;
 
+/**
+ * Shared trait for query builders that accept entity instances.
+ */
 trait QueryWithEntitiesTrait
 {
-    /** @var class-string<Entity> */
-    protected string $entity_class;
-
     /** @var Entity[] $this ->entities */
     private array $entities = [];
 
@@ -30,6 +30,10 @@ trait QueryWithEntitiesTrait
         return $this;
     }
 
+    /**
+     * Add entities to be used in the query
+     * @param Entity[] $entities
+     */
     public function addEntities(array $entities): static
     {
         foreach ($entities as $entity) {
@@ -39,6 +43,9 @@ trait QueryWithEntitiesTrait
         return $this;
     }
 
+    /**
+     * Clears the entities from the query.
+     */
     public function clearEntities(): void
     {
         unset($this->entities);

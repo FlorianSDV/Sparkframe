@@ -6,6 +6,9 @@ namespace Sparkframe\Exceptions;
 
 use Exception;
 
+/**
+ * An exception thrown if a subquery does not have exactly one column in the SELECT clause.
+ */
 class IncorrectSubquerySelectException extends Exception
 {
     public function __construct(string $query)

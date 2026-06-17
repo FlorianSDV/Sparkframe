@@ -14,19 +14,22 @@ use Sparkframe\Attributes\Primary;
 use Sparkframe\Tests\Mocks\Entities\EntityWithoutPrimaryKey;
 use Sparkframe\Tests\Mocks\Entities\UserMockEntity;
 
+/**
+ * Tests for the Entity base class.
+ */
 class EntityTest extends TestCase
 {
     public static function mockEntityProvider(): array
     {
-        $mock_entity_1 = new UserMockEntity();
-        $mock_entity_1->setId(1);
-        $mock_entity_1->name = 'John Doe';
-        $mock_entity_1->email_address = 'john.doe@example.com';
-        $mock_entity_1->age = 30;
-        $mock_entity_1->phone_number = '1234567890';
+        $mockEntity1 = new UserMockEntity();
+        $mockEntity1->setId(1);
+        $mockEntity1->name = 'John Doe';
+        $mockEntity1->email_address = 'john.doe@example.com';
+        $mockEntity1->age = 30;
+        $mockEntity1->phone_number = '1234567890';
 
         return [
-            'single_entity' => [$mock_entity_1],
+            'single_entity' => [$mockEntity1],
         ];
     }
 
@@ -39,19 +42,19 @@ class EntityTest extends TestCase
             'age' => 30,
             'phone_number' => '1234567890'
         ];
-        $mock_entity = new UserMockEntity($expected);
+        $mockEntity = new UserMockEntity($expected);
 
-        $this->assertEquals($expected['id'], $mock_entity->id);
-        $this->assertEquals($expected['name'], $mock_entity->name);
-        $this->assertEquals($expected['email_address'], $mock_entity->email_address);
-        $this->assertEquals($expected['age'], $mock_entity->age);
-        $this->assertEquals($expected['phone_number'], $mock_entity->phone_number);
+        $this->assertEquals($expected['id'], $mockEntity->id);
+        $this->assertEquals($expected['name'], $mockEntity->name);
+        $this->assertEquals($expected['email_address'], $mockEntity->email_address);
+        $this->assertEquals($expected['age'], $mockEntity->age);
+        $this->assertEquals($expected['phone_number'], $mockEntity->phone_number);
     }
 
     #[DataProvider('mockEntityProvider')]
-    public function testGetColumnNames(UserMockEntity $mock_entity): void
+    public function testGetColumnNames(UserMockEntity $mockEntity): void
     {
-        $column_names = $mock_entity->getColumnNames();
+        $column_names = $mockEntity->getColumnNames();
         $expected = [
             'id',
             'name',
@@ -66,16 +69,16 @@ class EntityTest extends TestCase
     }
 
     #[DataProvider('mockEntityProvider')]
-    public function testGetColumnReflections(UserMockEntity $mock_entity): void
+    public function testGetColumnReflections(UserMockEntity $mockEntity): void
     {
-        $getColumnReflectionsMethod = new ReflectionMethod($mock_entity, 'getColumnReflections');
+        $getColumnReflectionsMethod = new ReflectionMethod($mockEntity, 'getColumnReflections');
 
         /** @var ReflectionProperty[] $column_reflections */
-        $column_reflections = $getColumnReflectionsMethod->invoke($mock_entity);
+        $column_reflections = $getColumnReflectionsMethod->invoke($mockEntity);
 
         $this->assertContainsOnlyInstancesOf(ReflectionProperty::class, $column_reflections);
-        foreach ($column_reflections as $column_reflection) {
-            $name = $column_reflection->getName();
+        foreach ($column_reflections as $columnReflection) {
+            $name = $columnReflection->getName();
             $this->assertTrue(in_array($name, [
                 'id',
                 'name',
@@ -86,7 +89,7 @@ class EntityTest extends TestCase
         }
 
         /** @var ReflectionProperty[] $primary_column_reflections */
-        $primary_column_reflections = $getColumnReflectionsMethod->invoke($mock_entity, Primary::class);
+        $primary_column_reflections = $getColumnReflectionsMethod->invoke($mockEntity, Primary::class);
         $this->assertContainsOnlyInstancesOf(ReflectionProperty::class, $primary_column_reflections);
         foreach ($primary_column_reflections as $primary_column_reflection) {
             $name = $primary_column_reflection->getName();
@@ -96,13 +99,13 @@ class EntityTest extends TestCase
 
 
     #[DataProvider('mockEntityProvider')]
-    public function testGetColumnReflectionsError(UserMockEntity $mock_entity): void
+    public function testGetColumnReflectionsError(UserMockEntity $mockEntity): void
     {
-        $getColumnReflectionsMethod = new ReflectionMethod($mock_entity, 'getColumnReflections');
+        $getColumnReflectionsMethod = new ReflectionMethod($mockEntity, 'getColumnReflections');
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Argument $type must be Column::class or Primary::class');
-        $getColumnReflectionsMethod->invoke($mock_entity, Object::class);
+        $getColumnReflectionsMethod->invoke($mockEntity, Object::class);
     }
 
     public function testGetPrimaryKeyColumnName(): void
@@ -124,15 +127,15 @@ class EntityTest extends TestCase
     public function testSetId(): void
     {
         $id = 1;
-        $mock_entity = new UserMockEntity();
-        $mock_entity->setId($id);
+        $mockEntity = new UserMockEntity();
+        $mockEntity->setId($id);
 
-        $this->assertEquals($id, $mock_entity->id);
+        $this->assertEquals($id, $mockEntity->id);
     }
 
 
     #[DataProvider('mockEntityProvider')]
-    public function testGetValuesArray(UserMockEntity $mock_entity): void
+    public function testGetValuesArray(UserMockEntity $mockEntity): void
     {
         $expected = [
             'id' => 1,
@@ -141,7 +144,7 @@ class EntityTest extends TestCase
             'age' => 30,
             'phone_number' => '1234567890'
         ];
-        $values_array = $mock_entity->getValuesArray();
+        $values_array = $mockEntity->getValuesArray();
 
         $this->assertEquals($expected, $values_array);
     }

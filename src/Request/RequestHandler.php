@@ -8,6 +8,10 @@ use Exception;
 use Sparkframe\Bootstrap\Globals;
 use Sparkframe\Bootstrap\Router;
 
+/**
+ * Maps the incoming request to the correct Controller method.
+ * @package Sparkframe\Request
+ */
 class RequestHandler
 {
     private Request $request;
@@ -17,17 +21,18 @@ class RequestHandler
     }
 
     /**
+     * Map the incoming request to the correct Controller method.
      * @throws Exception
      */
-    public function handle()
+    public function handle(): mixed
     {
-        // Get the method belonging to this route.
-        $method_route = Router::routeToMethod($this->request);
+        // Get the controller method belonging to this route.
+        $routeToControllerMethodMap = Router::routeToMethod($this->request);
 
         // Fetch the correct controller, method name and variables from the uri.
-        $controller = Globals::getController($method_route->getController());
-        $method = $method_route->getMethodName();
-        $variables = $method_route->getVariables();
+        $controller = Globals::getController($routeToControllerMethodMap->getController());
+        $method = $routeToControllerMethodMap->getMethodName();
+        $variables = $routeToControllerMethodMap->getVariables();
 
         // Invoke the method with the correct variables.
         return $controller->$method(...$variables);

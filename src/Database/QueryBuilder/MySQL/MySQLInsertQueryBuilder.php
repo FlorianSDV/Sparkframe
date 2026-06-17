@@ -9,13 +9,20 @@ use PDO;
 use Sparkframe\Database\QueryBuilder\Builders\InsertQueryBuilderInterface;
 use Sparkframe\Database\QueryBuilder\Traits\QueryBuilderTrait;
 use Sparkframe\Database\QueryBuilder\Traits\QueryWithEntitiesTrait;
+use Sparkframe\Entity\Entity;
 
+/**
+ * A QueryBuilder class for creating insert queries for MySQL.
+ */
 class MySQLInsertQueryBuilder implements InsertQueryBuilderInterface
 {
     use QueryBuilderTrait;
     use QueryWithEntitiesTrait;
 
-    public function __construct(protected PDO $PDO, protected string $target_table_name, protected string $entity_class)
+    /**
+     * @param class-string<Entity> $entity_class
+     */
+    public function __construct(protected PDO $pdo, protected string $target_table_name, protected string $entity_class)
     {
     }
 
@@ -25,7 +32,7 @@ class MySQLInsertQueryBuilder implements InsertQueryBuilderInterface
     private function getQuery(array $columns): string
     {
         $sql_columns = implode(', ', $columns);
-        $values = array_map(fn ($column) => ":$column", $columns);
+        $values = array_map(fn (string $column): string => ":$column", $columns);
         $sql_values_part = implode(', ', $values);
 
         return "insert into {$this->getTargetTable()} ($sql_columns) values ($sql_values_part)";
@@ -50,8 +57,9 @@ class MySQLInsertQueryBuilder implements InsertQueryBuilderInterface
 
         $primary_key_data_type = $this->entity_class::getPrimaryKeyDataType();
 
+        $pdo = $this->pdo;
         try {
-            $pdo = $this->PDO;
+            // Use transaction for bulk insert and rollback.
             $pdo->beginTransaction();
             $stmt = $pdo->prepare($sql);
 
@@ -59,9 +67,10 @@ class MySQLInsertQueryBuilder implements InsertQueryBuilderInterface
                 $values = $entity->getValuesArray();
                 $stmt->execute($values);
                 $last_insert_id = $pdo->lastInsertId();
-                $last_insert_id = $this->converIdToDataType($last_insert_id, $primary_key_data_type);
+                $last_insert_id = $this->convertIdToDataType($last_insert_id, $primary_key_data_type);
                 $entity->setId($last_insert_id);
             }
+
             $pdo->commit();
         } catch (Exception $e) {
             $pdo->rollBack();
@@ -72,7 +81,7 @@ class MySQLInsertQueryBuilder implements InsertQueryBuilderInterface
         $this->cleanUp();
     }
 
-    private function converIdToDataType($id, string $data_type): string|int
+    private function convertIdToDataType(string|int $id, string $data_type): string|int
     {
         switch ($data_type) {
             case 'int':
