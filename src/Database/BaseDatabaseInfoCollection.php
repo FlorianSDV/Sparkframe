@@ -7,12 +7,12 @@ namespace Sparkframe\Database;
 abstract class BaseDatabaseInfoCollection
 {
     /**
-     * @var DatabaseInfo[]
+     * @return array<string, DatabaseInfo>
      */
     protected array $database_info_collection;
 
     /**
-     * @return DatabaseInfo[]
+     * @return array<string, DatabaseInfo>
      */
     public function getDatabaseInfoCollection(): array
     {
