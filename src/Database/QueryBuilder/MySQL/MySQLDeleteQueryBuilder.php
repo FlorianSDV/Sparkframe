@@ -9,12 +9,16 @@ use PDO;
 use Sparkframe\Database\QueryBuilder\Builders\DeleteQueryBuilderInterface;
 use Sparkframe\Database\QueryBuilder\Traits\QueryBuilderTrait;
 use Sparkframe\Database\QueryBuilder\Traits\QueryWithEntitiesTrait;
+use Sparkframe\Entity\Entity;
 
 class MySQLDeleteQueryBuilder implements DeleteQueryBuilderInterface
 {
     use QueryBuilderTrait;
     use QueryWithEntitiesTrait;
 
+    /**
+     * @param class-string<Entity> $entity_class
+     */
     public function __construct(protected PDO $PDO, protected string $target_table_name, protected string $entity_class)
     {
     }
@@ -32,8 +36,8 @@ class MySQLDeleteQueryBuilder implements DeleteQueryBuilderInterface
         $primary_key_column_name = $this->entity_class::getPrimaryKeyColumnName();
         $query_string = $this->getQuery($primary_key_column_name);
 
+        $pdo = $this->PDO;
         try {
-            $pdo = $this->PDO;
             $pdo->beginTransaction();
             $query = $pdo->prepare($query_string);
             $all_primary_keys = array_map(fn ($entity) => $entity->$primary_key_column_name, $this->entities);
@@ -48,6 +52,10 @@ class MySQLDeleteQueryBuilder implements DeleteQueryBuilderInterface
         $this->cleanUp();
     }
 
+    /**
+     * Generates the SQL query string for deleting entities from the target table.
+     * @return string The SQL query string with prepared statements.
+     */
     private function getQuery(string $primary_key_column_name): string
     {
         $placeholder = str_repeat('?, ', count($this->entities) - 1) . '?';

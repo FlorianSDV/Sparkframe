@@ -7,6 +7,11 @@ namespace Sparkframe\Functions;
 use Exception;
 use Sparkframe\Bootstrap\Globals;
 
+/**
+ * Render a view file and pass data to it
+ * @param string $view_name The filename of the view file. Do not pass the entire path.
+ * @param array $data An array of key value pairs. These can be used in the view file as variables.
+ */
 function view(string $view_name, array $data = []): void
 {
     $view_path = Globals::getRootdir() . '/src/View/' . $view_name . '.php';

@@ -10,6 +10,6 @@
     "php-cs-fixer.executablePath": "${workspaceFolder}/vendor/bin/php-cs-fixer",
     "php-cs-fixer.allowRisky": false,
     // phpcs
-    "phpcs.standard": "PSR12",
-    "phpcs.showSources": true,
+    // "phpcs.standard": "PSR12",
+    // "phpcs.showSources": true,
 }

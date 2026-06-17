@@ -4,13 +4,20 @@ declare(strict_types=1);
 
 namespace Sparkframe\Tools;
 
-class MethodRoute
+/**
+ * An object containing a uri and the class method it belongs to.
+ * @package Sparkframe\Tools
+ */
+class RouteToClassMethodMap
 {
     /**
      * @var string[]
      */
     private array $uri;
 
+    /**
+     * @var string The complete uri
+     */
     private string $uri_string;
 
     /**
@@ -18,6 +25,9 @@ class MethodRoute
      */
     private array $variables = [];
 
+    /**
+     * @param class-string $controller The class string of the controller.
+     */
     public function __construct(
         string $uri,
         private readonly string $controller,
@@ -32,16 +42,25 @@ class MethodRoute
         return $this->uri_string;
     }
 
+    /**
+     * @return class-string The class string of the controller.
+     */
     public function getController(): string
     {
         return $this->controller;
     }
 
+    /**
+     * @return string The name of the Controller method.
+     */
     public function getMethodName(): string
     {
         return $this->method_name;
     }
 
+    /**
+     * @return string[] The variable placeholders in the uri.
+     */
     public function getVariables(): array
     {
         return $this->variables;

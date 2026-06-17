@@ -9,12 +9,16 @@ use PDO;
 use Sparkframe\Database\QueryBuilder\Builders\DeleteQueryBuilderInterface;
 use Sparkframe\Database\QueryBuilder\Traits\QueryBuilderTrait;
 use Sparkframe\Database\QueryBuilder\Traits\QueryWithEntitiesTrait;
+use Sparkframe\Entity\Entity;
 
 class SQLiteDeleteQueryBuilder implements DeleteQueryBuilderInterface
 {
     use QueryBuilderTrait;
     use QueryWithEntitiesTrait;
 
+    /**
+     * @param class-string<Entity> $entity_class
+     */
     public function __construct(protected PDO $PDO, protected string $target_table_name, protected string $entity_class)
     {
     }
@@ -32,9 +36,19 @@ class SQLiteDeleteQueryBuilder implements DeleteQueryBuilderInterface
         $primary_key_column_name = $this->entity_class::getPrimaryKeyColumnName();
         $query_string = $this->getQuery($primary_key_column_name);
 
-        $query = $this->PDO->prepare($query_string);
-        $all_primary_keys = array_map(fn ($entity) => $entity->$primary_key_column_name, $this->entities);
-        $query->execute($all_primary_keys);
+        $pdo = $this->PDO;
+        try {
+            $pdo->beginTransaction();
+            $query = $pdo->prepare($query_string);
+            $all_primary_keys = array_map(fn ($entity) => $entity->$primary_key_column_name, $this->entities);
+            $query->execute($all_primary_keys);
+            $pdo->commit();
+        } catch (Exception $e) {
+            $pdo->rollBack();
+
+            throw new Exception('Failed to execute delete query: ' . $e->getMessage(), 0, $e);
+        }
+
         $this->cleanUp();
     }
 

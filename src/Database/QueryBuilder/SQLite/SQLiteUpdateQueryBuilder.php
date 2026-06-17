@@ -9,12 +9,16 @@ use PDO;
 use Sparkframe\Database\QueryBuilder\Builders\UpdateQueryBuilderInterface;
 use Sparkframe\Database\QueryBuilder\Traits\QueryBuilderTrait;
 use Sparkframe\Database\QueryBuilder\Traits\QueryWithEntitiesTrait;
+use Sparkframe\Entity\Entity;
 
 class SQLiteUpdateQueryBuilder implements UpdateQueryBuilderInterface
 {
     use QueryBuilderTrait;
     use QueryWithEntitiesTrait;
 
+    /**
+     * @param class-string<Entity> $entity_class
+     */
     public function __construct(protected PDO $PDO, protected string $target_table_name, protected string $entity_class)
     {
     }
@@ -35,8 +39,8 @@ class SQLiteUpdateQueryBuilder implements UpdateQueryBuilderInterface
         $primary_key_column_name = $this->entity_class::getPrimaryKeyColumnName();
         $sql = $this->getQuery($primary_key_column_name);
 
+        $pdo = $this->PDO;
         try {
-            $pdo = $this->PDO;
             $pdo->beginTransaction();
             $stmt = $pdo->prepare($sql);
 
@@ -60,21 +64,12 @@ class SQLiteUpdateQueryBuilder implements UpdateQueryBuilderInterface
     /**
      * @throws Exception
      */
-    private function getQuery($primary_key_column_name): string
+    private function getQuery(string $primary_key_column_name): string
     {
         $columns = $this->entity_class::getColumnNames();
 
-        $set_part = '';
-
-        foreach ($columns as $key => $column) {
-            $set_part .= "$column = :$column";
-
-            if (array_key_last($columns) == $key) {
-                break;
-            }
-
-            $set_part .= ', ';
-        }
+        $set_parts = array_map(fn ($column) => "$column = :$column", $columns);
+        $set_part = implode(', ', $set_parts);
 
         $where_part = "where $primary_key_column_name = :$primary_key_column_name";
 

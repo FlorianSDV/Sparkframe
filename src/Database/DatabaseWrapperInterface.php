@@ -9,6 +9,7 @@ use Sparkframe\Database\QueryBuilder\Builders\DeleteQueryBuilderInterface;
 use Sparkframe\Database\QueryBuilder\Builders\InsertQueryBuilderInterface;
 use Sparkframe\Database\QueryBuilder\Builders\SelectQueryBuilderInterface;
 use Sparkframe\Database\QueryBuilder\Builders\UpdateQueryBuilderInterface;
+use Sparkframe\Entity\Entity;
 
 /**
  * Interface DatabaseWrapperInterface
@@ -18,9 +19,16 @@ use Sparkframe\Database\QueryBuilder\Builders\UpdateQueryBuilderInterface;
 interface DatabaseWrapperInterface
 {
     public function getPDO(): PDO;
-    //todo: implement various methods for building queries
+
+    /** @param class-string<Entity> $entity_class */
     public function selectQuery(string $from_table_name, string $entity_class): SelectQueryBuilderInterface;
+
+    /** @param class-string<Entity> $entity_class */
     public function insertQuery(string $insert_into_table_name, string $entity_class): InsertQueryBuilderInterface;
+
+    /** @param class-string<Entity> $entity_class */
     public function updateQuery(string $update_table_name, string $entity_class): UpdateQueryBuilderInterface;
+
+    /** @param class-string<Entity> $entity_class */
     public function deleteQuery(string $delete_from_table_name, string $entity_class): DeleteQueryBuilderInterface;
 }
