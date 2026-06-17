@@ -7,7 +7,7 @@ namespace Sparkframe\Controller;
 use ReflectionClass;
 use Sparkframe\Attributes\Route;
 use Sparkframe\Request\Request;
-use Sparkframe\Tools\MethodRoute;
+use Sparkframe\Tools\RouteToClassMethodMap;
 
 use function Sparkframe\Functions\view;
 
@@ -20,10 +20,10 @@ abstract class Controller
         $this->request = new Request();
     }
 
-    public function myfunc()
-    {
-    }
-
+    /**
+     * Returns an array of RouteToClassMethodMaps for the controller.
+     * @return array<string, RouteToClassMethodMap[]>
+     */
     public function getRoutes(): array
     {
         $controller_routes = [];
@@ -31,20 +31,20 @@ abstract class Controller
         $methods = $reflection->getMethods();
 
         foreach ($methods as $method) {
-            $method_routes = $method->getAttributes(name: Route::class);
+            $routes = $method->getAttributes(name: Route::class);
 
-            if (count($method_routes) === 0) {
+            if (count($routes) === 0) {
                 continue;
             }
 
-            foreach ($method_routes as $method_route) {
+            foreach ($routes as $route) {
                 /**
-                 * @var Route $new_method_route_instance
+                 * @var Route $route_instance
                  */
-                $new_method_route_instance = $method_route->newInstance();
+                $route_instance = $route->newInstance();
 
-                $controller_routes[$new_method_route_instance->getRequestMethod()->value][] = new MethodRoute(
-                    $new_method_route_instance->getRoute(),
+                $controller_routes[$route_instance->getRequestMethod()->value][] = new RouteToClassMethodMap(
+                    $route_instance->getRoute(),
                     $method->class,
                     $method->name
                 );

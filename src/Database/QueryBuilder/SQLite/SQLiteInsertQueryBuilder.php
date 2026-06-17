@@ -9,12 +9,16 @@ use PDO;
 use Sparkframe\Database\QueryBuilder\Builders\InsertQueryBuilderInterface;
 use Sparkframe\Database\QueryBuilder\Traits\QueryBuilderTrait;
 use Sparkframe\Database\QueryBuilder\Traits\QueryWithEntitiesTrait;
+use Sparkframe\Entity\Entity;
 
 class SQLiteInsertQueryBuilder implements InsertQueryBuilderInterface
 {
     use QueryBuilderTrait;
     use QueryWithEntitiesTrait;
 
+    /**
+     * @param class-string<Entity> $entity_class
+     */
     public function __construct(protected PDO $PDO, protected string $target_table_name, protected string $entity_class)
     {
     }
@@ -50,8 +54,8 @@ class SQLiteInsertQueryBuilder implements InsertQueryBuilderInterface
 
         $primary_key_data_type = $this->entity_class::getPrimaryKeyDataType();
 
+        $pdo = $this->PDO;
         try {
-            $pdo = $this->PDO;
             $pdo->beginTransaction();
             $stmt = $pdo->prepare($sql);
 
@@ -72,7 +76,7 @@ class SQLiteInsertQueryBuilder implements InsertQueryBuilderInterface
         $this->cleanUp();
     }
 
-    private function convertIdToDataType($id, string $data_type): string|int
+    private function convertIdToDataType(string|int $id, string $data_type): string|int
     {
         switch ($data_type) {
             case 'int':
