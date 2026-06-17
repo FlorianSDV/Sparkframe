@@ -15,6 +15,9 @@ use Sparkframe\Database\QueryBuilder\MySQL\MySQLSelectQueryBuilder;
 use Sparkframe\Tests\Mocks\Entities\NoteMockEntity;
 use Sparkframe\Tests\Mocks\Entities\UserMockEntity;
 
+/**
+ * Tests for MySQLSelectQueryBuilder.
+ */
 class MySQLSelectQueryBuilderTest extends TestCase
 {
     private MySQLSelectQueryBuilder $mysql_select_query_builder;
@@ -74,7 +77,7 @@ class MySQLSelectQueryBuilderTest extends TestCase
     }
 
     #[DataProvider('selectDataProvider')]
-    public function testSelectQueryIsAtomic(array $column_names, string $expected_query)
+    public function testSelectQueryIsAtomic(array $column_names, string $expected_query): void
     {
         $query = $this->mysql_select_query_builder
             ->select(...$column_names)
@@ -136,25 +139,25 @@ class MySQLSelectQueryBuilderTest extends TestCase
     public static function whereInDataProvider(): array
     {
         // These subqueries are wrapped in functions so they are only created during the test and not before
-        $sub_query_1_fn = function () {
+        $sub_query_1_fn = function (): array {
             $sub_query_1 = static::createSelectQueryBuilder('notes', NoteMockEntity::class)
                 ->select(NoteMockEntity::USER_ID)
                 ->where([NoteMockEntity::TITLE . ' = ' => "'Groceries'"]);
             return ['column_name' => UserMockEntity::ID, 'values' => $sub_query_1];
         };
 
-        $sub_query_2_fn = function () {
+        $sub_query_2_fn = function (): array {
             $sub_query_2 = static::createSelectQueryBuilder('users', UserMockEntity::class)
                 ->select(UserMockEntity::ID)
                 ->where([UserMockEntity::AGE . ' > ' => 20]);
             return ['column_name' => UserMockEntity::ID, 'values' => $sub_query_2];
         };
 
-        $where_ins_array_fn = fn () => [['column_name' => UserMockEntity::NAME, 'values' => ["'John'", "'Jane'", "'Jim'"]]];
+        $where_ins_array_fn = fn (): array => [['column_name' => UserMockEntity::NAME, 'values' => ["'John'", "'Jane'", "'Jim'"]]];
 
-        $where_in_with_and_fn = fn () => [$sub_query_1_fn()];
+        $where_in_with_and_fn = fn (): array => [$sub_query_1_fn()];
 
-        $where_in_with_multiple_subqueries_fn = fn () => [$sub_query_1_fn(), $sub_query_2_fn()];
+        $where_in_with_multiple_subqueries_fn = fn (): array => [$sub_query_1_fn(), $sub_query_2_fn()];
 
         return [
             'Single where in' => [
@@ -204,25 +207,25 @@ class MySQLSelectQueryBuilderTest extends TestCase
 
     public static function whereNotInDataProvider(): array
     {
-        $sub_query_1_fn = function () {
+        $sub_query_1_fn = function (): array {
             $sub_query_1 = static::createSelectQueryBuilder('notes', NoteMockEntity::class)
                 ->select(NoteMockEntity::USER_ID)
                 ->where([NoteMockEntity::TITLE . ' = ' => "'Groceries'"]);
             return ['column_name' => UserMockEntity::ID, 'values' => $sub_query_1];
         };
 
-        $sub_query_2_fn = function () {
+        $sub_query_2_fn = function (): array {
             $sub_query_2 = static::createSelectQueryBuilder('users', UserMockEntity::class)
                 ->select(UserMockEntity::ID)
                 ->where([UserMockEntity::AGE . ' > ' => 20]);
             return ['column_name' => UserMockEntity::ID, 'values' => $sub_query_2];
         };
 
-        $where_not_in_with_subquery_fn = fn () => [$sub_query_1_fn()];
+        $where_not_in_with_subquery_fn = fn (): array => [$sub_query_1_fn()];
 
-        $where_not_in_with_multiple_subqueries_fn = fn () => [$sub_query_1_fn(), $sub_query_2_fn()];
+        $where_not_in_with_multiple_subqueries_fn = fn (): array => [$sub_query_1_fn(), $sub_query_2_fn()];
 
-        $where_not_ins_array_fn = fn () => [['column_name' => UserMockEntity::NAME, 'values' => ["'John'", "'Jane'", "'Jim'"]]];
+        $where_not_ins_array_fn = fn (): array => [['column_name' => UserMockEntity::NAME, 'values' => ["'John'", "'Jane'", "'Jim'"]]];
 
         return [
             'Single where not in' => [
@@ -273,18 +276,18 @@ class MySQLSelectQueryBuilderTest extends TestCase
     public static function orDataProvider(): array
     {
         $where = [UserMockEntity::ID . ' = ' => 1];
-        $empty_or_ins_fn = fn () => [];
+        $empty_or_ins_fn = fn (): array => [];
 
-        $empty_or_not_ins_fn = fn () => [];
+        $empty_or_not_ins_fn = fn (): array => [];
 
-        $test_or_in_fn = fn () => [['column_name' => UserMockEntity::AGE, 'values' => [20, 30]]];
+        $test_or_in_fn = fn (): array => [['column_name' => UserMockEntity::AGE, 'values' => [20, 30]]];
 
-        $test_multiple_or_ins_fn = fn () => [
+        $test_multiple_or_ins_fn = fn (): array => [
             ['column_name' => UserMockEntity::AGE, 'values' => [20, 30]],
             ['column_name' => UserMockEntity::ID, 'values' => [2, 3]],
         ];
 
-        $test_or_in_with_subquery_fn = function () {
+        $test_or_in_with_subquery_fn = function (): array {
             $sub_query = static::createSelectQueryBuilder('notes', NoteMockEntity::class)
                 ->select(NoteMockEntity::USER_ID)
                 ->where([NoteMockEntity::TITLE . ' = ' => "'Groceries'"]);
@@ -408,13 +411,13 @@ class MySQLSelectQueryBuilderTest extends TestCase
 
     public static function addOrInDataProvider(): array
     {
-        $sub_query_fn = fn () => static::createSelectQueryBuilder('users', UserMockEntity::class)
+        $sub_query_fn = fn (): MySQLSelectQueryBuilder => static::createSelectQueryBuilder('users', UserMockEntity::class)
             ->select(UserMockEntity::ID)
             ->where([UserMockEntity::AGE . ' > ' => 20]);
         return [
             'With array' => [
                 'column_name' => UserMockEntity::AGE,
-                'values' => fn () => [20, 30],
+                'values' => fn (): array => [20, 30],
                 'expected_array' => [[
                     'column' => UserMockEntity::AGE,
                      'values' => [
@@ -451,7 +454,7 @@ class MySQLSelectQueryBuilderTest extends TestCase
 
     public static function addWhereInDataProvider(): array
     {
-        $expected_where_in_conditions_fn = fn () => [[
+        $expected_where_in_conditions_fn = fn (): array => [[
             'column' => UserMockEntity::AGE,
             'values' => [
                 ['value' => 20],
@@ -459,11 +462,11 @@ class MySQLSelectQueryBuilderTest extends TestCase
             ]
         ]];
 
-        $where_in_subquery_fn = fn () => static::createSelectQueryBuilder('users', UserMockEntity::class)
+        $where_in_subquery_fn = fn (): MySQLSelectQueryBuilder => static::createSelectQueryBuilder('users', UserMockEntity::class)
                 ->select(UserMockEntity::ID)
                 ->where([UserMockEntity::AGE . ' > ' => 20]);
 
-        $expected_where_in_conditions_with_subquery_fn = fn () => [[
+        $expected_where_in_conditions_with_subquery_fn = fn (): array => [[
             'column' => UserMockEntity::AGE,
             'values' => $where_in_subquery_fn()
         ]];
@@ -471,7 +474,7 @@ class MySQLSelectQueryBuilderTest extends TestCase
         return [
             'Add where in with array' => [
                 'column_name' => UserMockEntity::AGE,
-                'values' => fn () => [20, 30],
+                'values' => fn (): array => [20, 30],
                 'expected_where_in_conditions' => $expected_where_in_conditions_fn
             ],
             'Add where in with subquery' => [
@@ -579,9 +582,9 @@ class MySQLSelectQueryBuilderTest extends TestCase
 
     public static function readyForSubQueryDataProvider(): array
     {
-        $get_query_fn = fn () => static::createSelectQueryBuilder('users', UserMockEntity::class);
-        $get_ready_for_subquery_fn = fn () => $get_query_fn()->select(UserMockEntity::ID);
-        $get_not_ready_for_subquery_fn = fn () => $get_query_fn()->select(UserMockEntity::ID, UserMockEntity::NAME);
+        $get_query_fn = fn (): MySQLSelectQueryBuilder => static::createSelectQueryBuilder('users', UserMockEntity::class);
+        $get_ready_for_subquery_fn = fn (): MySQLSelectQueryBuilder => $get_query_fn()->select(UserMockEntity::ID);
+        $get_not_ready_for_subquery_fn = fn (): MySQLSelectQueryBuilder => $get_query_fn()->select(UserMockEntity::ID, UserMockEntity::NAME);
 
         return [
             'Ready' => [

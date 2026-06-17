@@ -8,6 +8,9 @@ use Exception;
 use Sparkframe\Database\BaseDatabaseInfoCollection;
 use Sparkframe\Database\DatabaseWrapperFactory;
 
+/**
+ * Abstract base class for application bootstrapping.
+ */
 abstract class BaseBootstrapper
 {
     protected static BaseBootstrapper $instance;
@@ -19,7 +22,7 @@ abstract class BaseBootstrapper
     {
     }
 
-    protected function __clone()
+    protected function __clone(): void
     {
     }
 
@@ -33,11 +36,12 @@ abstract class BaseBootstrapper
 
     public static function getInstance(): BaseBootstrapper
     {
-        if (!isset(self::$instance)) {
-            self::$instance = new static();
+        // Use static because this class will be inherited.
+        if (!isset(static::$instance)) {
+            static::$instance = new static();
         }
 
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -66,6 +70,10 @@ abstract class BaseBootstrapper
         static::$bootstrapped = true;
     }
 
+    /**
+     * Starts a session, can only be run once.
+     * @return void
+     */
     public function startSession(): void
     {
         // Start the session only once
@@ -78,6 +86,12 @@ abstract class BaseBootstrapper
         static::$session_started = true;
     }
 
+    /**
+     * Initializes the environment variables, can only be run once.
+     * @param string $root_dir
+     * @param string $controllers_dir
+     * @return void
+     */
     public function initializeGlobals(string $root_dir, string $controllers_dir, ?string $view_dir = null): void
     {
         // Initialize globals only once
@@ -85,14 +99,16 @@ abstract class BaseBootstrapper
             return;
         }
 
-        // env variables
-        // db connection strings
         $globals = Globals::getInstance();
         $globals->initialize($root_dir, $controllers_dir, $view_dir);
 
         static::$globals_initialized = true;
     }
 
+    /**
+     * Sets up the controllers, can only be run after initializing globals.
+     * @throws Exception
+     */
     protected function setupControllers(): void
     {
         if (!static::$globals_initialized) {
@@ -102,16 +118,21 @@ abstract class BaseBootstrapper
         $globals->initializeControllers();
     }
     /**
+     * Sets up the database wrappers, can only be run after initializing globals.
      * @throws Exception
      */
     protected function setupDatabaseWrappers(BaseDatabaseInfoCollection $baseDatabaseInfoCollection): void
     {
-        foreach ($baseDatabaseInfoCollection->getDatabaseInfoCollection() as $database_name => $base_database_info) {
-            $databaseWrapper = DatabaseWrapperFactory::createDatabaseWrapper($base_database_info);
+        foreach ($baseDatabaseInfoCollection->getDatabaseInfoCollection() as $database_name => $baseDatabaseInfo) {
+            $databaseWrapper = DatabaseWrapperFactory::createDatabaseWrapper($baseDatabaseInfo);
             Globals::addDatabaseWrapper($database_name, $databaseWrapper);
         }
     }
 
+    /**
+     * Sets up the router, can only be run after setting up controllers.
+     * @return void
+     */
     protected function setupRouter(): void
     {
         Router::setRoutes();

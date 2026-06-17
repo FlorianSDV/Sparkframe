@@ -6,6 +6,9 @@ namespace Sparkframe\Database\QueryBuilder\Composition;
 
 use Sparkframe\Entity\Entity;
 
+/**
+ * Interface for query builders that operate on entity instances.
+ */
 interface QueryWithEntitiesInterface
 {
     /**
@@ -15,8 +18,12 @@ interface QueryWithEntitiesInterface
 
     /**
      * Adds multiple entities to the query.
+     * @param $entities Entity[]
      */
     public function addEntities(array $entities): static;
 
+    /**
+     * Clears the entities from the query.
+     */
     public function clearEntities(): void;
 }

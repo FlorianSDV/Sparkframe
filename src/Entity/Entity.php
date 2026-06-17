@@ -11,6 +11,9 @@ use ReflectionProperty;
 use Sparkframe\Attributes\Column;
 use Sparkframe\Attributes\Primary;
 
+/**
+ * An object representing a single row in a database table.
+ */
 abstract class Entity
 {
     public function __construct(array $columns_and_values = [])
@@ -24,17 +27,21 @@ abstract class Entity
         }
     }
 
+    /**
+     * @return string[] the names of all the columns that are defined with a #[Column] or #[Primary] attribute.
+     */
     public static function getColumnNames(): array
     {
         $reflections = static::getColumnReflections();
         return array_map(
-            fn ($column_reflection) => $column_reflection->getName(),
+            fn (ReflectionProperty $columnReflection): string => $columnReflection->getName(),
             $reflections
         );
     }
 
     /**
-     * @param Column::class|Primary::class $type
+     * Get reflections of all the Entity properties that have a #[Column] or #[Primary] attrubute.
+     * @param class-string<Column>|class-string<Primary> $type The type of column to get. Defaults to all columns.
      * @return ReflectionProperty[]
      */
     protected static function getColumnReflections(string $type = Column::class): array
@@ -75,10 +82,13 @@ abstract class Entity
      */
     public function setId(string|int $id): void
     {
-        $primary = $this->getPrimaryKeyColumnName();
-        $this->$primary = $id;
+        $primary_key = $this->getPrimaryKeyColumnName();
+        $this->$primary_key = $id;
     }
 
+    /**
+     * @return array<string, mixed> A key value array of the column names and their values.
+     */
     public function getValuesArray(): array
     {
         $values = [];
@@ -113,8 +123,8 @@ abstract class Entity
         $column_reflections = static::getColumnReflections();
         $column = array_find(
             $column_reflections,
-            fn ($column_reflection) =>
-            $column_reflection->getName() == $column_name
+            fn (ReflectionProperty $columnReflection): bool =>
+            $columnReflection->getName() == $column_name
         );
 
         if (!$column) {

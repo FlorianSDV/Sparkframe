@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Sparkframe\Request;
 
+/**
+ * The incoming http request
+ */
 class Request
 {
     private string $uri;
@@ -33,6 +36,9 @@ class Request
         return $this->request_body;
     }
 
+    /**
+     * @return array The post body
+     */
     public function getRequestPost(): array
     {
         return $this->request_post;
