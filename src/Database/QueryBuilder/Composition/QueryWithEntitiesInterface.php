@@ -6,6 +6,9 @@ namespace Sparkframe\Database\QueryBuilder\Composition;
 
 use Sparkframe\Entity\Entity;
 
+/**
+ * Interface for query builders that operate on entity instances.
+ */
 interface QueryWithEntitiesInterface
 {
     /**

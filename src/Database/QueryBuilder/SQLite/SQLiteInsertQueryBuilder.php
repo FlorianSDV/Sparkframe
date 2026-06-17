@@ -11,6 +11,9 @@ use Sparkframe\Database\QueryBuilder\Traits\QueryBuilderTrait;
 use Sparkframe\Database\QueryBuilder\Traits\QueryWithEntitiesTrait;
 use Sparkframe\Entity\Entity;
 
+/**
+ * A QueryBuilder class for creating insert queries for SQLite.
+ */
 class SQLiteInsertQueryBuilder implements InsertQueryBuilderInterface
 {
     use QueryBuilderTrait;
@@ -19,7 +22,7 @@ class SQLiteInsertQueryBuilder implements InsertQueryBuilderInterface
     /**
      * @param class-string<Entity> $entity_class
      */
-    public function __construct(protected PDO $PDO, protected string $target_table_name, protected string $entity_class)
+    public function __construct(protected PDO $pdo, protected string $target_table_name, protected string $entity_class)
     {
     }
 
@@ -29,7 +32,7 @@ class SQLiteInsertQueryBuilder implements InsertQueryBuilderInterface
     private function getQuery(array $columns): string
     {
         $sql_columns = implode(', ', $columns);
-        $values = array_map(fn ($column) => ":$column", $columns);
+        $values = array_map(fn (string $column): string => ":$column", $columns);
         $sql_values_part = implode(', ', $values);
 
         return "insert into {$this->getTargetTable()} ($sql_columns) values ($sql_values_part)";
@@ -54,7 +57,7 @@ class SQLiteInsertQueryBuilder implements InsertQueryBuilderInterface
 
         $primary_key_data_type = $this->entity_class::getPrimaryKeyDataType();
 
-        $pdo = $this->PDO;
+        $pdo = $this->pdo;
         try {
             $pdo->beginTransaction();
             $stmt = $pdo->prepare($sql);

@@ -8,6 +8,9 @@ use Exception;
 use Sparkframe\Request\Request;
 use Sparkframe\Tools\RouteToClassMethodMap;
 
+/**
+ * Maps incoming HTTP requests to controller methods.
+ */
 final class Router
 {
     /**

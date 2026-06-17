@@ -6,6 +6,9 @@ namespace Sparkframe\Database\QueryBuilder\Builders;
 
 use Sparkframe\Database\QueryBuilder\Composition\QueryBuilderInterface;
 
+/**
+ * Interface for building SELECT queries.
+ */
 interface SelectQueryBuilderInterface extends QueryBuilderInterface
 {
     /**

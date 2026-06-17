@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Sparkframe\Database;
 
+/**
+ * Abstract collection of database connection info keyed by database name.
+ */
 abstract class BaseDatabaseInfoCollection
 {
     /**

@@ -7,6 +7,9 @@ namespace Sparkframe\Database\QueryBuilder\Traits;
 use Exception;
 use Sparkframe\Entity\Entity;
 
+/**
+ * Shared trait for query builders that accept entity instances.
+ */
 trait QueryWithEntitiesTrait
 {
     /** @var Entity[] $this ->entities */

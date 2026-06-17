@@ -6,9 +6,12 @@ namespace Sparkframe\Database\QueryBuilder\Composition;
 
 use PDO;
 
+/**
+ * Base interface for all query builders.
+ */
 interface QueryBuilderInterface
 {
-    public function __construct(PDO $PDO, string $target_table_name, string $entity_class);
+    public function __construct(PDO $pdo, string $target_table_name, string $entity_class);
 
     /**
      * @return string Returns the target table name that will be used in the FROM clause of the query.
@@ -17,6 +20,7 @@ interface QueryBuilderInterface
 
     /**
      * Executes the query.
+     * @return mixed|void The result of the query if the query returns a result.
      */
     public function execute();
 

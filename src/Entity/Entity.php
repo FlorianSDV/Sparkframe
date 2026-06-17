@@ -34,7 +34,7 @@ abstract class Entity
     {
         $reflections = static::getColumnReflections();
         return array_map(
-            fn ($column_reflection) => $column_reflection->getName(),
+            fn (ReflectionProperty $columnReflection): string => $columnReflection->getName(),
             $reflections
         );
     }
@@ -123,8 +123,8 @@ abstract class Entity
         $column_reflections = static::getColumnReflections();
         $column = array_find(
             $column_reflections,
-            fn ($column_reflection) =>
-            $column_reflection->getName() == $column_name
+            fn (ReflectionProperty $columnReflection): bool =>
+            $columnReflection->getName() == $column_name
         );
 
         if (!$column) {

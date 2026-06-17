@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Sparkframe\Database;
 
+/**
+ * Holds connection details for a single database.
+ */
 class DatabaseInfo
 {
     public function __construct(protected string $database_url, protected string $user, protected string $password)
