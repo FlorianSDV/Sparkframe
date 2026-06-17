@@ -15,6 +15,7 @@ final class Globals
     private static Globals $instance;
     private static string $root_dir;
     private static string $controllers_dir;
+    private static string $view_dir;
 
     /**
      * @var DatabaseWrapperInterface[]
@@ -45,7 +46,7 @@ final class Globals
      * @param string $root_dir The root directory of the project using Sparkframe.
      * @param string $controllers_dir The directory containing the controllers.
      */
-    public function initialize(string $root_dir, string $controllers_dir): void
+    public function initialize(string $root_dir, string $controllers_dir, ?string $view_dir = null): void
     {
         // Initialize once
         if (self::$initialized) {
@@ -54,6 +55,7 @@ final class Globals
 
         self::$root_dir = $root_dir;
         self::$controllers_dir = $controllers_dir;
+        self::$view_dir = $view_dir;
         $dotenv = Dotenv::createImmutable(self::$root_dir);
         $dotenv->load();
 
@@ -66,6 +68,11 @@ final class Globals
     public static function getRootdir(): string
     {
         return self::$root_dir;
+    }
+
+    public static function getViewDir(): string
+    {
+        return self::$view_dir;
     }
 
     protected function __clone()

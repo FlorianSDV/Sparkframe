@@ -89,7 +89,8 @@ abstract class BaseBootstrapper
      * @param string $controllers_dir
      * @return void
      */
-    public function initializeGlobals(string $root_dir, string $controllers_dir): void
+
+    public function initializeGlobals(string $root_dir, string $controllers_dir, ?string $view_dir = null): void
     {
         // Initialize globals only once
         if (static::$globals_initialized) {
@@ -97,7 +98,7 @@ abstract class BaseBootstrapper
         }
 
         $globals = Globals::getInstance();
-        $globals->initialize($root_dir, $controllers_dir);
+        $globals->initialize($root_dir, $controllers_dir, $view_dir);
 
         static::$globals_initialized = true;
     }
