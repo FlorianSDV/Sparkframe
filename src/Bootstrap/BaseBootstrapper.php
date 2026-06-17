@@ -92,7 +92,6 @@ abstract class BaseBootstrapper
      * @param string $controllers_dir
      * @return void
      */
-
     public function initializeGlobals(string $root_dir, string $controllers_dir, ?string $view_dir = null): void
     {
         // Initialize globals only once
