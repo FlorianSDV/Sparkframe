@@ -11,6 +11,9 @@ use Sparkframe\Tools\RouteToClassMethodMap;
 
 use function Sparkframe\Functions\view;
 
+/**
+ * Base class for HTTP controllers with routing and view rendering.
+ */
 abstract class Controller
 {
     protected Request $request;
@@ -39,12 +42,12 @@ abstract class Controller
 
             foreach ($routes as $route) {
                 /**
-                 * @var Route $route_instance
+                 * @var Route $routeInstance
                  */
-                $route_instance = $route->newInstance();
+                $routeInstance = $route->newInstance();
 
-                $controller_routes[$route_instance->getRequestMethod()->value][] = new RouteToClassMethodMap(
-                    $route_instance->getRoute(),
+                $controller_routes[$routeInstance->getRequestMethod()->value][] = new RouteToClassMethodMap(
+                    $routeInstance->getRoute(),
                     $method->class,
                     $method->name
                 );

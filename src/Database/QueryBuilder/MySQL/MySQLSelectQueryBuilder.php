@@ -40,7 +40,7 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
     /**
      * @param class-string<Entity> $entity_class
      */
-    public function __construct(protected PDO $PDO, protected string $target_table_name, protected string $entity_class)
+    public function __construct(protected PDO $pdo, protected string $target_table_name, protected string $entity_class)
     {
     }
 
@@ -125,7 +125,7 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
     protected function addOrIn(string $column_name, SelectQueryBuilderInterface|array $values): void
     {
         if (is_array($values) && !empty($values)) {
-            $values = array_map(fn ($value) => ['value' => $value], $values);
+            $values = array_map(fn (mixed $value): array => ['value' => $value], $values);
 
             $this->or_in_conditions[] = [
                 'column' => $column_name,
@@ -171,7 +171,7 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
     protected function addWhereIn(string $column_name, MySQLSelectQueryBuilder|array $values): void
     {
         if (is_array($values) && !empty($values)) {
-            $values = array_map(fn ($value) => ['value' => $value], $values);
+            $values = array_map(fn (mixed $value): array => ['value' => $value], $values);
             $this->where_in_conditions[] = [
                 'column' => $column_name,
                 'values' => $values
@@ -437,7 +437,7 @@ class MySQLSelectQueryBuilder implements SelectQueryBuilderInterface
         }
 
         $query_string = $this->getQuery();
-        $query = $this->PDO
+        $query = $this->pdo
             ->prepare($query_string);
 
         $prepared_statements = $this->getPreparedStatements();

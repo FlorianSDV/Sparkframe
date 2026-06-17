@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Sparkframe\Database\QueryBuilder\Traits;
 
+/**
+ * Shared trait for query builders that target a database table.
+ */
 trait QueryBuilderTrait
 {
     /**

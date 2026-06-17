@@ -13,6 +13,9 @@ use Sparkframe\Database\QueryBuilder\SQLite\SQLiteInsertQueryBuilder;
 use Sparkframe\Database\SqliteDatabaseWrapper;
 use Sparkframe\Tests\Mocks\Entities\UserMockEntity;
 
+/**
+ * Tests for SQLiteInsertQueryBuilder.
+ */
 class SQLiteInsertQueryBuilderTest extends TestCase
 {
     private SQLiteInsertQueryBuilder $sqlite_insert_query_builder;
@@ -25,23 +28,23 @@ class SQLiteInsertQueryBuilderTest extends TestCase
 
     public static function mockEntityProvider(): array
     {
-        $mock_entity_1 = new UserMockEntity();
-        $mock_entity_1->setId(1);
-        $mock_entity_1->name = 'John Doe';
-        $mock_entity_1->email_address = 'john.doe@example.com';
-        $mock_entity_1->age = 30;
-        $mock_entity_1->phone_number = '1234567890';
+        $mockEntity1 = new UserMockEntity();
+        $mockEntity1->setId(1);
+        $mockEntity1->name = 'John Doe';
+        $mockEntity1->email_address = 'john.doe@example.com';
+        $mockEntity1->age = 30;
+        $mockEntity1->phone_number = '1234567890';
 
-        $mock_entity_2 = new UserMockEntity();
-        $mock_entity_2->setId(2);
-        $mock_entity_2->name = 'Jane Doe';
-        $mock_entity_2->email_address = 'jane.doe@example.com';
-        $mock_entity_2->age = 25;
-        $mock_entity_2->phone_number = '0987654321';
+        $mockEntity2 = new UserMockEntity();
+        $mockEntity2->setId(2);
+        $mockEntity2->name = 'Jane Doe';
+        $mockEntity2->email_address = 'jane.doe@example.com';
+        $mockEntity2->age = 25;
+        $mockEntity2->phone_number = '0987654321';
 
         return [
-            'single_entity' => [[$mock_entity_1]],
-            'multiple_entities' => [[$mock_entity_1, $mock_entity_2]]
+            'single_entity' => [[$mockEntity1]],
+            'multiple_entities' => [[$mockEntity1, $mockEntity2]]
         ];
     }
 
@@ -58,18 +61,18 @@ class SQLiteInsertQueryBuilderTest extends TestCase
     }
 
     #[DataProvider('mockEntityProvider')]
-    public function testGetQueryWithValues(array $mock_entities): void
+    public function testGetQueryWithValues(array $mockEntities): void
     {
         $p_key_name = UserMockEntity::getPrimaryKeyColumnName();
         $base_query = new ReflectionMethod(SQLiteInsertQueryBuilder::class, 'getQuery')
             ->invoke($this->sqlite_insert_query_builder, UserMockEntity::getColumnNames());
         $base_expected_query = "insert into users ($p_key_name, name, email_address, age, phone_number) values (:$p_key_name, :name, :email_address, :age, :phone_number)";
 
-        /** @var UserMockEntity $mock_entity  */
-        foreach ($mock_entities as $mock_entity) {
+        /** @var UserMockEntity $mockEntity  */
+        foreach ($mockEntities as $mockEntity) {
             $query = $base_query;
             $expected_query = $base_expected_query;
-            $value_array = $mock_entity->getValuesArray();
+            $value_array = $mockEntity->getValuesArray();
 
             foreach ($value_array as $value_type => $value) {
                 $query = str_replace(":$value_type", (string) $value, $query);

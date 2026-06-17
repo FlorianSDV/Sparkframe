@@ -7,6 +7,9 @@ namespace Sparkframe\Attributes;
 use Attribute;
 use Sparkframe\Tools\RequestMethod;
 
+/**
+ * Attribute that maps a controller method to an HTTP route.
+ */
 #[Attribute(Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
 class Route
 {

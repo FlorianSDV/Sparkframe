@@ -8,6 +8,9 @@ use Exception;
 use Sparkframe\Database\BaseDatabaseInfoCollection;
 use Sparkframe\Database\DatabaseWrapperFactory;
 
+/**
+ * Abstract base class for application bootstrapping.
+ */
 abstract class BaseBootstrapper
 {
     protected static BaseBootstrapper $instance;
@@ -19,7 +22,7 @@ abstract class BaseBootstrapper
     {
     }
 
-    protected function __clone()
+    protected function __clone(): void
     {
     }
 
@@ -121,8 +124,8 @@ abstract class BaseBootstrapper
      */
     protected function setupDatabaseWrappers(BaseDatabaseInfoCollection $baseDatabaseInfoCollection): void
     {
-        foreach ($baseDatabaseInfoCollection->getDatabaseInfoCollection() as $database_name => $base_database_info) {
-            $databaseWrapper = DatabaseWrapperFactory::createDatabaseWrapper($base_database_info);
+        foreach ($baseDatabaseInfoCollection->getDatabaseInfoCollection() as $database_name => $baseDatabaseInfo) {
+            $databaseWrapper = DatabaseWrapperFactory::createDatabaseWrapper($baseDatabaseInfo);
             Globals::addDatabaseWrapper($database_name, $databaseWrapper);
         }
     }

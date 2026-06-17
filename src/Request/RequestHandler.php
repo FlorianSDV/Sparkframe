@@ -24,7 +24,7 @@ class RequestHandler
      * Map the incoming request to the correct Controller method.
      * @throws Exception
      */
-    public function handle()
+    public function handle(): mixed
     {
         // Get the controller method belonging to this route.
         $routeToControllerMethodMap = Router::routeToMethod($this->request);

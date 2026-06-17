@@ -7,6 +7,9 @@ namespace Sparkframe\Database\QueryBuilder\Builders;
 use Sparkframe\Database\QueryBuilder\Composition\QueryBuilderInterface;
 use Sparkframe\Database\QueryBuilder\Composition\QueryWithEntitiesInterface;
 
+/**
+ * Interface for building DELETE queries.
+ */
 interface DeleteQueryBuilderInterface extends QueryBuilderInterface, QueryWithEntitiesInterface
 {
 }

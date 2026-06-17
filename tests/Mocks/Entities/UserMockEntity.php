@@ -8,6 +8,9 @@ use Sparkframe\Attributes\Column;
 use Sparkframe\Attributes\Primary;
 use Sparkframe\Entity\Entity;
 
+/**
+ * Mock entity used in tests to represent a user row.
+ */
 class UserMockEntity extends Entity
 {
     public const string ID = 'id';
