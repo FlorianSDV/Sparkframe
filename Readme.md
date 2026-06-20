@@ -10,7 +10,7 @@ I created it as a personal challenge for fun.
 - session handling
 
 # Getting started
-To get started quickly i recommend creating a template from the Sparkframe-firestarter repository:
+To get started quickly I recommend creating a template from the Sparkframe-firestarter repository:
 https://github.com/FlorianSDV/sparkframe-firestarter
 
-This template will contain everything you need to get started with using Sparkframe.
+This template will contain everything you need to get started using Sparkframe.
